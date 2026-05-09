@@ -1,0 +1,329 @@
+---
+# Lyrion Music Server (LMS) Player Page
+# Direct HTTP JSON-RPC communication with LMS server
+# Polls player status every 3 seconds and provides playback controls
+
+# MDI icon font for music playback controls
+font:
+  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: mdi_music_40
+    size: 40
+    bpp: 8
+    glyphs: [
+      $mdi_play,
+      $mdi_pause,
+      $mdi_skip_previous,
+      $mdi_skip_next,
+      $mdi_shuffle,
+      $mdi_shuffle_disabled,
+      $mdi_repeat,
+      $mdi_repeat_once,
+      $mdi_repeat_off,
+      $mdi_volume_high,
+      $mdi_music,
+    ]
+
+http_request:
+  useragent: esphome/music-player
+  timeout: 5s
+  verify_ssl: false
+
+substitutions:
+  lms_player_id: !secret player_id
+  lms_server_url: !secret lms_server
+
+online_image:
+  - url: "${lms_server_url}/music/current/cover.jpg?player=${lms_player_id}"
+    id: lms_album_art
+    format: JPEG
+    type: RGB565
+    byte_order: little_endian
+    resize: 200x200
+    update_interval: never
+    on_download_finished:
+      - lvgl.image.update:
+          id: lms_art_image
+          src: lms_album_art
+      - lambda: |-
+          lv_obj_clear_flag(id(lms_art_image), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(lms_art_placeholder), LV_OBJ_FLAG_HIDDEN);
+    on_error:
+      - lambda: |-
+          lv_obj_add_flag(id(lms_art_image), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(lms_art_placeholder), LV_OBJ_FLAG_HIDDEN);
+
+globals:
+  - id: lms_is_playing
+    type: bool
+    initial_value: 'false'
+  - id: lms_volume
+    type: int
+    initial_value: '50'
+  - id: lms_elapsed
+    type: float
+    initial_value: '0.0'
+  - id: lms_duration
+    type: float
+    initial_value: '0.0'
+  - id: lms_shuffle_mode
+    type: int
+    initial_value: '0'
+  - id: lms_repeat_mode
+    type: int
+    initial_value: '0'
+  - id: lms_volume_adjusting
+    type: bool
+    initial_value: 'false'
+  - id: lms_current_title
+    type: std::string
+    initial_value: '""'
+
+interval:
+  - interval: 3s
+    then:
+      - script.execute: lms_poll_status
+
+script:
+  # Poll LMS for current player status
+  - id: lms_poll_status
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                   std::string("${lms_player_id}") + "\",[\"status\",\"-\",\"1\",\"tags:aldKJ\"]]}";
+          capture_response: true
+          max_response_buffer_size: 2048
+          on_response:
+            then:
+              - lambda: |-
+                  if (response->status_code != 200) {
+                    ESP_LOGW("lms", "HTTP error: %d", response->status_code);
+                    return;
+                  }
+
+                  // Parse JSON response
+                  ArduinoJson::JsonDocument doc;
+                  ArduinoJson::DeserializationError err = ArduinoJson::deserializeJson(doc, body);
+                  if (err) {
+                    ESP_LOGW("lms", "JSON parse error: %s", err.c_str());
+                    return;
+                  }
+
+                  auto result = doc["result"];
+                  if (result.isNull()) {
+                    ESP_LOGW("lms", "No result in response");
+                    return;
+                  }
+
+                  // Player mode (play/pause/stop)
+                  const char* mode = result["mode"] | "stop";
+                  bool was_playing = id(lms_is_playing);
+                  id(lms_is_playing) = (strcmp(mode, "play") == 0);
+
+                  // Time tracking
+                  id(lms_elapsed) = result["time"] | 0.0f;
+                  id(lms_duration) = result["duration"] | 0.0f;
+
+                  // Volume (skip if user is adjusting)
+                  if (!id(lms_volume_adjusting)) {
+                    int vol = result["mixer volume"] | 50;
+                    if (vol < 0) vol = 0;
+                    if (vol > 100) vol = 100;
+                    id(lms_volume) = vol;
+                    // Update slider
+                    lv_slider_set_value(id(lms_volume_slider), vol, LV_ANIM_ON);
+                  }
+
+                  // Shuffle & repeat
+                  id(lms_shuffle_mode) = result["playlist shuffle"] | 0;
+                  id(lms_repeat_mode) = result["playlist repeat"] | 0;
+
+                  // Track info from playlist_loop
+                  auto playlist = result["playlist_loop"];
+                  std::string title = "--";
+                  std::string artist = "";
+                  std::string album = "";
+                  if (playlist.is<ArduinoJson::JsonArray>() && playlist.size() > 0) {
+                    auto track = playlist[0];
+                    const char* t = track["title"] | "--";
+                    const char* a = track["artist"] | "";
+                    const char* al = track["album"] | "";
+                    title = t;
+                    artist = a;
+                    album = al;
+                  }
+
+                  // Refresh album art if track changed
+                  if (title != id(lms_current_title)) {
+                    id(lms_current_title) = title;
+                    id(lms_album_art)->update();
+                  }
+
+                  // Update labels
+                  lv_label_set_text(id(lms_title_label), title.c_str());
+                  lv_label_set_text(id(lms_artist_label), artist.c_str());
+                  lv_label_set_text(id(lms_album_label), album.c_str());
+
+                  // Progress bar (0-1000 range)
+                  int progress = 0;
+                  if (id(lms_duration) > 0) {
+                    progress = (int)((id(lms_elapsed) / id(lms_duration)) * 1000.0f);
+                    if (progress > 1000) progress = 1000;
+                  }
+                  lv_bar_set_value(id(lms_progress_bar), progress, LV_ANIM_ON);
+
+                  // Elapsed time label
+                  int elapsed_sec = (int)id(lms_elapsed);
+                  int e_min = elapsed_sec / 60;
+                  int e_sec = elapsed_sec % 60;
+                  char elapsed_buf[16];
+                  snprintf(elapsed_buf, sizeof(elapsed_buf), "%d:%02d", e_min, e_sec);
+                  lv_label_set_text(id(lms_elapsed_label), elapsed_buf);
+
+                  // Remaining time label
+                  int remain_sec = (int)(id(lms_duration) - id(lms_elapsed));
+                  if (remain_sec < 0) remain_sec = 0;
+                  int r_min = remain_sec / 60;
+                  int r_sec = remain_sec % 60;
+                  char remain_buf[16];
+                  snprintf(remain_buf, sizeof(remain_buf), "-%d:%02d", r_min, r_sec);
+                  lv_label_set_text(id(lms_remaining_label), remain_buf);
+
+                  // Play/pause icon
+                  if (id(lms_is_playing)) {
+                    lv_label_set_text(id(lms_play_icon_label), "\U000F03E4");  // mdi_pause
+                  } else {
+                    lv_label_set_text(id(lms_play_icon_label), "\U000F040A");  // mdi_play
+                  }
+
+                  // Determine inactive color based on sun/theme
+                  bool is_night = !id(sun_sun).is_above_horizon();
+                  lv_color_t active_color = is_night
+                    ? lv_color_make(0x85, 0x17, 0x17)   // night_red
+                    : lv_color_make(0xFF, 0xA5, 0x00);   // orange
+                  lv_color_t inactive_color;
+                  if (is_night) {
+                    inactive_color = lv_color_make(0x85, 0x17, 0x17);  // night_red
+                  } else if (id(current_theme).active_index() == 1) {
+                    inactive_color = lv_color_make(0x75, 0x75, 0x75);  // gray600
+                  } else {
+                    inactive_color = lv_color_make(0x80, 0x80, 0x80);  // gray
+                  }
+
+                  // Shuffle icon
+                  if (id(lms_shuffle_mode) > 0) {
+                    lv_label_set_text(id(lms_shuffle_icon_label), "\U000F049D");  // mdi_shuffle
+                    lv_obj_set_style_text_color(id(lms_shuffle_icon_label), active_color, LV_PART_MAIN);
+                  } else {
+                    lv_label_set_text(id(lms_shuffle_icon_label), "\U000F049E");  // mdi_shuffle_disabled
+                    lv_obj_set_style_text_color(id(lms_shuffle_icon_label), inactive_color, LV_PART_MAIN);
+                  }
+
+                  // Repeat icon
+                  if (id(lms_repeat_mode) == 1) {
+                    lv_label_set_text(id(lms_repeat_icon_label), "\U000F0456");  // mdi_repeat
+                    lv_obj_set_style_text_color(id(lms_repeat_icon_label), active_color, LV_PART_MAIN);
+                  } else if (id(lms_repeat_mode) == 2) {
+                    lv_label_set_text(id(lms_repeat_icon_label), "\U000F0458");  // mdi_repeat_once
+                    lv_obj_set_style_text_color(id(lms_repeat_icon_label), active_color, LV_PART_MAIN);
+                  } else {
+                    lv_label_set_text(id(lms_repeat_icon_label), "\U000F0457");  // mdi_repeat_off
+                    lv_obj_set_style_text_color(id(lms_repeat_icon_label), inactive_color, LV_PART_MAIN);
+                  }
+
+  # Toggle play/pause
+  - id: lms_play_pause
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            if (id(lms_is_playing)) {
+              return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                     std::string("${lms_player_id}") + "\",[\"pause\",\"1\"]]}";
+            } else {
+              return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                     std::string("${lms_player_id}") + "\",[\"pause\",\"0\"]]}";
+            }
+      - delay: 200ms
+      - script.execute: lms_poll_status
+
+  # Skip to next track
+  - id: lms_skip_next
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                   std::string("${lms_player_id}") + "\",[\"playlist\",\"index\",\"+1\"]]}";
+      - delay: 500ms
+      - script.execute: lms_poll_status
+
+  # Skip to previous track
+  - id: lms_skip_previous
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                   std::string("${lms_player_id}") + "\",[\"playlist\",\"index\",\"-1\"]]}";
+      - delay: 500ms
+      - script.execute: lms_poll_status
+
+  # Set volume
+  - id: lms_set_volume
+    parameters:
+      volume_level: int
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+              "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"%s\",[\"mixer\",\"volume\",\"%d\"]]}",
+              "${lms_player_id}", volume_level);
+            return std::string(buf);
+
+  # Toggle shuffle
+  - id: lms_toggle_shuffle
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            int next_mode = (id(lms_shuffle_mode) + 1) % 3;
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+              "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"%s\",[\"playlist\",\"shuffle\",\"%d\"]]}",
+              "${lms_player_id}", next_mode);
+            return std::string(buf);
+      - delay: 200ms
+      - script.execute: lms_poll_status
+
+  # Toggle repeat
+  - id: lms_toggle_repeat
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            int next_mode = (id(lms_repeat_mode) + 1) % 3;
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+              "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"%s\",[\"playlist\",\"repeat\",\"%d\"]]}",
+              "${lms_player_id}", next_mode);
+            return std::string(buf);
+      - delay: 200ms
+      - script.execute: lms_poll_status

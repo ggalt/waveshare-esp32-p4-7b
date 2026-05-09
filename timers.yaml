@@ -1,0 +1,117 @@
+# =============================================================================
+# timers.yaml — Voice Assistant Timer Support
+# =============================================================================
+# Loaded as a package from your main config. ESPHome deep-merges this
+# voice_assistant: block with the one in your main file, so no duplication
+# occurs — the on_timer_* triggers are simply added to your existing setup.
+#
+# When a timer finishes, a local alarm sound plays on the device speaker,
+# repeating every 10 seconds. Between plays the wake word listener restarts
+# so the user can say "Alexa, stop" to dismiss the alarm.
+#
+# VOICE COMMANDS (examples):
+#   "Set a timer for 5 minutes"
+#   "Set a pizza timer for 12 minutes"
+#   "Set a pasta timer for 8 minutes"      ← runs alongside the pizza timer
+#   "Cancel the pizza timer"
+#   "How much time is left on the pizza timer?"
+#   "Cancel all timers"
+# =============================================================================
+
+globals:
+  - id: timer_alarm_active
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+script:
+  - id: timer_alarm_loop
+    mode: restart
+    then:
+      - globals.set:
+          id: timer_alarm_active
+          value: "true"
+      - logger.log: "Timer alarm loop started"
+      - while:
+          condition:
+            lambda: "return id(timer_alarm_active);"
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: my_media_player
+                media_file: timer_alarm_sound
+                announcement: true
+            - wait_until:
+                condition:
+                  not:
+                    media_player.is_announcing:
+                timeout: 30s
+            - if:
+                condition:
+                  lambda: "return id(timer_alarm_active);"
+                then:
+                  - delay: 10s
+      - logger.log: "Timer alarm loop ended"
+
+  - id: stop_timer_alarm
+    mode: single
+    then:
+      - logger.log: "Stopping timer alarm"
+      - globals.set:
+          id: timer_alarm_active
+          value: "false"
+      - script.stop: timer_alarm_loop
+
+  # Called from voice_assistant on_start when alarm is active.
+  # Runs as a separate coroutine so it can wait for the pipeline to tear
+  # down before sending the TTS confirmation.
+  - id: dismiss_timer_alarm
+    mode: single
+    then:
+      - script.execute: stop_timer_alarm
+      - voice_assistant.stop:
+      - wait_until:
+          condition:
+            not:
+              voice_assistant.is_running:
+          timeout: 5s
+      - wait_until:
+          condition:
+            and:
+              - not:
+                  media_player.is_announcing:
+              - not:
+                  media_player.is_playing:
+          timeout: 5s
+      - homeassistant.service:
+          service: tts.speak
+          data:
+            entity_id: tts.piper
+            media_player_entity_id: media_player.waveshare_esp32_p4_wifi6_touch_lcd_7b_media_player
+            message: "Timer stopped"
+
+voice_assistant:
+
+  # ---- New timer created ----
+  on_timer_started:
+    - logger.log:
+        format: "Timer started: '%s' (%d seconds)"
+        args: ["timer.name.c_str()", "timer.total_seconds"]
+
+  # ---- Timer paused, resumed, or time adjusted ----
+  on_timer_updated:
+    - logger.log:
+        format: "Timer updated: '%s' — %d s remaining (active: %d)"
+        args: ["timer.name.c_str()", "timer.seconds_left", "timer.is_active"]
+
+  # ---- Timer cancelled by voice ----
+  on_timer_cancelled:
+    - logger.log:
+        format: "Timer cancelled: '%s'"
+        args: ["timer.name.c_str()"]
+
+  # ---- Timer expired — play repeating alarm ----
+  on_timer_finished:
+    - logger.log:
+        format: "Timer finished: '%s'"
+        args: ["timer.name.c_str()"]
+    - script.execute: timer_alarm_loop

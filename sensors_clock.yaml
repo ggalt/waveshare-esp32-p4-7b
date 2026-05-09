@@ -1,0 +1,88 @@
+---
+# Stripped copy of sensors_base.yaml for clock-only config.
+# Removes all on_value/lvgl.label.update/lvgl.qrcode.update blocks
+# that reference info screen widgets which no longer exist.
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: config
+
+  - platform: factory_reset
+    name: "Factory Reset"
+    id: Reset
+    entity_category: config
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    internal: true
+
+  - platform: internal_temperature
+    id: cpu_temperature
+    name: "CPU Temperature"
+    filters:
+      - lambda: return (x * 1.8) + 32;
+    unit_of_measurement: "°F"
+    icon: mdi:thermometer
+    entity_category: diagnostic
+
+  # Reports the WiFi signal strength in %
+  - platform: copy
+    id: wifi_signal_db_percent
+    source_id: wifi_signal_db
+    name: "WiFi Strength"
+    icon: mdi:wifi
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+      - throttle: 60s
+    unit_of_measurement: "%"
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: status
+    name: "Status"
+    icon: mdi:check-network-outline
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: template
+    id: device_last_restart
+    name: 'Last Restart'
+    icon: mdi:clock
+    entity_category: diagnostic
+
+  - platform: version
+    id: esphome_version
+    name: 'ESPHome Version'
+    hide_timestamp: true
+    icon: mdi:source-branch
+    entity_category: diagnostic
+
+  - platform: wifi_info
+    mac_address:
+      id: mac_address
+      name: "MAC Address"
+      icon: mdi:network-pos
+      entity_category: diagnostic
+
+    ip_address:
+      id: ip_address
+      name: "IP Address"
+      icon: mdi:ip-network
+      entity_category: diagnostic
+
+    ssid:
+      id: connected_ssid
+      name: "Connected SSID"
+      icon: mdi:wifi-check
+      entity_category: diagnostic
+
+  - platform: template
+    name: "Device Name"
+    id: device_name
+    internal: true
+    lambda: |-
+      return {App.get_name().c_str()};

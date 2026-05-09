@@ -1,0 +1,105 @@
+---
+# Weather data for clock display
+# Subscribes to weather.forecast_home from Home Assistant for condition icon and temperature.
+# Uses the library's weather_icons_update.yaml to swap SVG images by condition state.
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    id: weather_condition
+    on_value:
+      then: !include
+        file: esphome-modular-lvgl-buttons/weather_homeassistant/weather_icons_update.yaml
+        vars:
+          size: "100"
+          id: weather_condition_icon
+          input_id: weather_condition
+
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: temperature
+    id: outdoor_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: weather_temperature_label
+            text:
+              format: "%s°"
+              args: ['id(outdoor_temperature).state.c_str()']
+        - lvgl.label.update:
+            id: wp_temperature_label
+            text:
+              format: "%s°F"
+              args: ['id(outdoor_temperature).state.c_str()']
+        - lvgl.label.update:
+            id: music_temp_label
+            text:
+              format: "%s°"
+              args: ['id(outdoor_temperature).state.c_str()']
+
+image:
+  rgb565:
+    alpha_channel:
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/nt_clear.svg
+        id: clear_night_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/cloudy.svg
+        id: cloudy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: exceptional_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/fog.svg
+        id: fog_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sleet.svg
+        id: hail_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancetstorms.svg
+        id: lightning_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: lightning_rainy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/partlycloudy.svg
+        id: partlycloudy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/rain.svg
+        id: pouring_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancerain.svg
+        id: rainy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/snow.svg
+        id: snowy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancesleet.svg
+        id: snowy_rainy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sunny.svg
+        id: sunny_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/windy.svg
+        id: windy_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/unknown.svg
+        id: unknown_100
+        resize: 100x100
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/circle-slash.svg
+        id: unavailable_100
+        resize: 100x100

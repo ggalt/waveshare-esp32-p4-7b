@@ -1,0 +1,45 @@
+---
+# Clock font presets - all sizes compiled, selected via ${clock_size} substitution
+# Set clock_size to "small", "medium", or "large" in secrets.yaml
+
+substitutions:
+  clock_ampm_pad_small: "25"
+  clock_ampm_pad_medium: "38"
+  clock_ampm_pad_large: "51"
+
+font:
+  # Small: 120px time, 48px AM/PM
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_time_font_small
+    size: 120
+    bpp: 8
+    glyphs: "0123456789: "
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_ampm_font_small
+    size: 48
+    bpp: 8
+    glyphs: "AMP "
+
+  # Medium: 180px time, 72px AM/PM
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_time_font_medium
+    size: 180
+    bpp: 8
+    glyphs: "0123456789: "
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_ampm_font_medium
+    size: 72
+    bpp: 8
+    glyphs: "AMP "
+
+  # Large: 240px time, 96px AM/PM
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_time_font_large
+    size: 240
+    bpp: 8
+    glyphs: "0123456789: "
+  - file: 'esphome-modular-lvgl-buttons/assets/fonts/Nunito-SemiBold.ttf'
+    id: clock_ampm_font_large
+    size: 96
+    bpp: 8
+    glyphs: "AMP "

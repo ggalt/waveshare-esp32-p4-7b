@@ -1,0 +1,764 @@
+---
+# Weather detail page data
+# Provides sensor subscriptions, forecast fetching, and 80px icons for the weather detail page.
+# The weather_page LVGL layout is defined in the main config file.
+
+# --- Text sensors for weather detail page ---
+text_sensor:
+  # Duplicate condition subscription for weather page icon + condition label (internal)
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    id: wp_weather_condition
+    internal: true
+    on_value:
+      then:
+        - script.execute: update_wp_condition_icon
+        - script.execute: update_wp_condition_label
+
+  # Duplicate temperature subscription for weather page (internal)
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: temperature
+    id: wp_outdoor_temperature
+    internal: true
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: wp_temperature_label
+            text:
+              format: "%s°F"
+              args: ['id(wp_outdoor_temperature).state.c_str()']
+
+  # Humidity
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: humidity
+    id: wp_humidity
+    internal: true
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: wp_humidity_value
+            text:
+              format: "%s%%"
+              args: ['id(wp_humidity).state.c_str()']
+
+  # Air pressure
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: pressure
+    id: wp_pressure
+    internal: true
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: wp_pressure_value
+            text:
+              format: "%s inHg"
+              args: ['id(wp_pressure).state.c_str()']
+
+  # Wind speed
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: wind_speed
+    id: wp_wind_speed
+    internal: true
+    on_value:
+      then:
+        - script.execute: update_wind_display
+
+  # Wind bearing
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    attribute: wind_bearing
+    id: wp_wind_bearing
+    internal: true
+    on_value:
+      then:
+        - script.execute: update_wind_display
+
+# --- Globals for forecast conditions (used by icon update scripts) ---
+globals:
+  - id: forecast_condition_0
+    type: std::string
+    initial_value: '"unknown"'
+  - id: forecast_condition_1
+    type: std::string
+    initial_value: '"unknown"'
+  - id: forecast_condition_2
+    type: std::string
+    initial_value: '"unknown"'
+  - id: forecast_condition_3
+    type: std::string
+    initial_value: '"unknown"'
+  - id: forecast_condition_4
+    type: std::string
+    initial_value: '"unknown"'
+  - id: forecast_condition_5
+    type: std::string
+    initial_value: '"unknown"'
+
+# --- Scripts ---
+script:
+  # Update weather page condition icon from wp_weather_condition state
+  - id: update_wp_condition_icon
+    then:
+      - lambda: |-
+          std::string c = id(wp_weather_condition).state;
+          if (c == "clear-night") lv_img_set_src(id(wp_weather_condition_icon), id(clear_night_100));
+          else if (c == "cloudy") lv_img_set_src(id(wp_weather_condition_icon), id(cloudy_100));
+          else if (c == "exceptional") lv_img_set_src(id(wp_weather_condition_icon), id(exceptional_100));
+          else if (c == "fog") lv_img_set_src(id(wp_weather_condition_icon), id(fog_100));
+          else if (c == "hail") lv_img_set_src(id(wp_weather_condition_icon), id(hail_100));
+          else if (c == "lightning") lv_img_set_src(id(wp_weather_condition_icon), id(lightning_100));
+          else if (c == "lightning-rainy") lv_img_set_src(id(wp_weather_condition_icon), id(lightning_rainy_100));
+          else if (c == "partlycloudy") lv_img_set_src(id(wp_weather_condition_icon), id(partlycloudy_100));
+          else if (c == "pouring") lv_img_set_src(id(wp_weather_condition_icon), id(pouring_100));
+          else if (c == "rainy") lv_img_set_src(id(wp_weather_condition_icon), id(rainy_100));
+          else if (c == "snowy") lv_img_set_src(id(wp_weather_condition_icon), id(snowy_100));
+          else if (c == "snowy-rainy") lv_img_set_src(id(wp_weather_condition_icon), id(snowy_rainy_100));
+          else if (c == "sunny") lv_img_set_src(id(wp_weather_condition_icon), id(sunny_100));
+          else if (c == "windy") lv_img_set_src(id(wp_weather_condition_icon), id(windy_100));
+          else if (c == "unavailable") lv_img_set_src(id(wp_weather_condition_icon), id(unavailable_100));
+          else lv_img_set_src(id(wp_weather_condition_icon), id(unknown_100));
+
+  # Update weather page condition text label
+  - id: update_wp_condition_label
+    then:
+      - lvgl.label.update:
+          id: wp_condition_label
+          text: !lambda |-
+            std::string c = id(wp_weather_condition).state;
+            if (c == "clear-night") return std::string("Clear Night");
+            if (c == "cloudy") return std::string("Cloudy");
+            if (c == "exceptional") return std::string("Exceptional");
+            if (c == "fog") return std::string("Foggy");
+            if (c == "hail") return std::string("Hail");
+            if (c == "lightning") return std::string("Lightning");
+            if (c == "lightning-rainy") return std::string("Thunderstorm");
+            if (c == "partlycloudy") return std::string("Partly Cloudy");
+            if (c == "pouring") return std::string("Pouring");
+            if (c == "rainy") return std::string("Rainy");
+            if (c == "snowy") return std::string("Snowy");
+            if (c == "snowy-rainy") return std::string("Sleet");
+            if (c == "sunny") return std::string("Sunny");
+            if (c == "windy") return std::string("Windy");
+            return c;
+
+  # Format wind display as "X.X mph (DIR)"
+  - id: update_wind_display
+    then:
+      - lvgl.label.update:
+          id: wp_wind_value
+          text: !lambda |-
+            float speed = 0;
+            int bearing = 0;
+            if (!id(wp_wind_speed).state.empty()) {
+              speed = atof(id(wp_wind_speed).state.c_str());
+            }
+            if (!id(wp_wind_bearing).state.empty()) {
+              bearing = atoi(id(wp_wind_bearing).state.c_str());
+            }
+            const char* directions[] = {
+              "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+              "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+            };
+            int idx = (int)((bearing + 11.25) / 22.5) % 16;
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%.1f mph (%s)", speed, directions[idx]);
+            return std::string(buf);
+
+  # Fetch 6-day weather forecast from Home Assistant
+  - id: fetch_weather_forecast
+    then:
+      - logger.log:
+          level: INFO
+          format: "Requesting weather forecast from Home Assistant..."
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            type: daily
+            entity_id: weather.forecast_home
+          capture_response: true
+          response_template: >-
+            {% set forecasts = response["weather.forecast_home"].forecast %}
+            {% set result = {
+              'hilo': (forecasts[0].temperature | default(0) | string) + '° / ' + (forecasts[0].templow | default(0) | string) + '°',
+              'condition_0': forecasts[0].condition | default('unknown'),
+              'temp_hi_0': forecasts[0].temperature | default(0) | string,
+              'temp_lo_0': forecasts[0].templow | default(0) | string,
+              'day_0': as_timestamp(forecasts[0].datetime) | timestamp_custom('%a'),
+              'condition_1': forecasts[1].condition | default('unknown'),
+              'temp_hi_1': forecasts[1].temperature | default(0) | string,
+              'temp_lo_1': forecasts[1].templow | default(0) | string,
+              'day_1': as_timestamp(forecasts[1].datetime) | timestamp_custom('%a'),
+              'condition_2': forecasts[2].condition | default('unknown'),
+              'temp_hi_2': forecasts[2].temperature | default(0) | string,
+              'temp_lo_2': forecasts[2].templow | default(0) | string,
+              'day_2': as_timestamp(forecasts[2].datetime) | timestamp_custom('%a'),
+              'condition_3': forecasts[3].condition | default('unknown'),
+              'temp_hi_3': forecasts[3].temperature | default(0) | string,
+              'temp_lo_3': forecasts[3].templow | default(0) | string,
+              'day_3': as_timestamp(forecasts[3].datetime) | timestamp_custom('%a'),
+              'condition_4': forecasts[4].condition | default('unknown'),
+              'temp_hi_4': forecasts[4].temperature | default(0) | string,
+              'temp_lo_4': forecasts[4].templow | default(0) | string,
+              'day_4': as_timestamp(forecasts[4].datetime) | timestamp_custom('%a'),
+              'condition_5': forecasts[5].condition | default('unknown'),
+              'temp_hi_5': forecasts[5].temperature | default(0) | string,
+              'temp_lo_5': forecasts[5].templow | default(0) | string,
+              'day_5': as_timestamp(forecasts[5].datetime) | timestamp_custom('%a')
+            } %}
+            {{ result | tojson }}
+          on_success:
+            - lambda: |-
+                auto data = response["response"];
+
+                // Store conditions in globals for icon updates
+                id(forecast_condition_0) = data["condition_0"].as<std::string>();
+                id(forecast_condition_1) = data["condition_1"].as<std::string>();
+                id(forecast_condition_2) = data["condition_2"].as<std::string>();
+                id(forecast_condition_3) = data["condition_3"].as<std::string>();
+                id(forecast_condition_4) = data["condition_4"].as<std::string>();
+                id(forecast_condition_5) = data["condition_5"].as<std::string>();
+
+                ESP_LOGI("weather", "Forecast received - Day 0: %s %s°/%s°",
+                    data["condition_0"].as<std::string>().c_str(),
+                    data["temp_hi_0"].as<std::string>().c_str(),
+                    data["temp_lo_0"].as<std::string>().c_str());
+
+            # Update hi/lo
+            - lvgl.label.update:
+                id: wp_hilo_label
+                text: !lambda 'return response["response"]["hilo"].as<std::string>();'
+
+            # Update Day 0
+            - lvgl.label.update:
+                id: forecast_day_0
+                text: !lambda 'return response["response"]["day_0"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_0
+                text: !lambda 'return response["response"]["temp_hi_0"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_0
+                text: !lambda 'return response["response"]["temp_lo_0"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_0
+
+            # Update Day 1
+            - lvgl.label.update:
+                id: forecast_day_1
+                text: !lambda 'return response["response"]["day_1"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_1
+                text: !lambda 'return response["response"]["temp_hi_1"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_1
+                text: !lambda 'return response["response"]["temp_lo_1"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_1
+
+            # Update Day 2
+            - lvgl.label.update:
+                id: forecast_day_2
+                text: !lambda 'return response["response"]["day_2"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_2
+                text: !lambda 'return response["response"]["temp_hi_2"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_2
+                text: !lambda 'return response["response"]["temp_lo_2"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_2
+
+            # Update Day 3
+            - lvgl.label.update:
+                id: forecast_day_3
+                text: !lambda 'return response["response"]["day_3"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_3
+                text: !lambda 'return response["response"]["temp_hi_3"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_3
+                text: !lambda 'return response["response"]["temp_lo_3"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_3
+
+            # Update Day 4
+            - lvgl.label.update:
+                id: forecast_day_4
+                text: !lambda 'return response["response"]["day_4"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_4
+                text: !lambda 'return response["response"]["temp_hi_4"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_4
+                text: !lambda 'return response["response"]["temp_lo_4"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_4
+
+            # Update Day 5
+            - lvgl.label.update:
+                id: forecast_day_5
+                text: !lambda 'return response["response"]["day_5"].as<std::string>();'
+            - lvgl.label.update:
+                id: forecast_hi_5
+                text: !lambda 'return response["response"]["temp_hi_5"].as<std::string>() + "°";'
+            - lvgl.label.update:
+                id: forecast_lo_5
+                text: !lambda 'return response["response"]["temp_lo_5"].as<std::string>() + "°";'
+            - script.execute: update_forecast_icon_5
+
+          on_error:
+            - logger.log:
+                level: ERROR
+                format: "Failed to fetch weather forecast from Home Assistant"
+
+  # --- Forecast icon update scripts (one per day, reads from global) ---
+  - id: update_forecast_icon_0
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_0);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_0), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_0), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_0), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_0), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_0), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_0), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_0), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_0), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_0), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_0), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_0), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_0), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_0), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_0), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_0), id(unknown_80));
+
+  - id: update_forecast_icon_1
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_1);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_1), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_1), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_1), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_1), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_1), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_1), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_1), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_1), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_1), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_1), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_1), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_1), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_1), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_1), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_1), id(unknown_80));
+
+  - id: update_forecast_icon_2
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_2);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_2), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_2), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_2), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_2), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_2), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_2), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_2), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_2), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_2), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_2), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_2), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_2), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_2), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_2), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_2), id(unknown_80));
+
+  - id: update_forecast_icon_3
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_3);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_3), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_3), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_3), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_3), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_3), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_3), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_3), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_3), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_3), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_3), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_3), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_3), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_3), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_3), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_3), id(unknown_80));
+
+  - id: update_forecast_icon_4
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_4);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_4), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_4), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_4), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_4), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_4), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_4), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_4), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_4), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_4), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_4), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_4), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_4), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_4), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_4), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_4), id(unknown_80));
+
+  - id: update_forecast_icon_5
+    then:
+      - lambda: |-
+          std::string c = id(forecast_condition_5);
+          if (c == "clear-night") lv_img_set_src(id(forecast_icon_5), id(clear_night_80));
+          else if (c == "cloudy") lv_img_set_src(id(forecast_icon_5), id(cloudy_80));
+          else if (c == "exceptional") lv_img_set_src(id(forecast_icon_5), id(exceptional_80));
+          else if (c == "fog") lv_img_set_src(id(forecast_icon_5), id(fog_80));
+          else if (c == "hail") lv_img_set_src(id(forecast_icon_5), id(hail_80));
+          else if (c == "lightning") lv_img_set_src(id(forecast_icon_5), id(lightning_80));
+          else if (c == "lightning-rainy") lv_img_set_src(id(forecast_icon_5), id(lightning_rainy_80));
+          else if (c == "partlycloudy") lv_img_set_src(id(forecast_icon_5), id(partlycloudy_80));
+          else if (c == "pouring") lv_img_set_src(id(forecast_icon_5), id(pouring_80));
+          else if (c == "rainy") lv_img_set_src(id(forecast_icon_5), id(rainy_80));
+          else if (c == "snowy") lv_img_set_src(id(forecast_icon_5), id(snowy_80));
+          else if (c == "snowy-rainy") lv_img_set_src(id(forecast_icon_5), id(snowy_rainy_80));
+          else if (c == "sunny") lv_img_set_src(id(forecast_icon_5), id(sunny_80));
+          else if (c == "windy") lv_img_set_src(id(forecast_icon_5), id(windy_80));
+          else lv_img_set_src(id(forecast_icon_5), id(unknown_80));
+
+  # Style the forecast tabview - dark mode (black bg, white text)
+  - id: style_forecast_tabview_dark
+    then:
+      - lambda: |-
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, lv_color_black(), LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, lv_color_white(), LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, lv_color_white(), (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, lv_color_black(), LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, lv_color_black(), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+  # Style the forecast tabview - light mode (white bg, black text)
+  - id: style_forecast_tabview_light
+    then:
+      - lambda: |-
+          lv_color_t white_c = lv_color_make(0xF2, 0xF0, 0xEB);
+          lv_color_t black_c = lv_color_make(0x0D, 0x0D, 0x0D);
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, white_c, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, black_c, LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, black_c, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, white_c, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, white_c, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+  # Style the forecast tabview - night mode (black bg, night_red text)
+  - id: style_forecast_tabview_night
+    then:
+      - lambda: |-
+          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, lv_color_black(), LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, night_red_c, LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, night_red_c, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, lv_color_black(), LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, lv_color_black(), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+# --- Hourly forecast fetch script ---
+  - id: fetch_hourly_forecast
+    then:
+      - logger.log:
+          level: INFO
+          format: "Requesting hourly weather forecast from Home Assistant..."
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            type: hourly
+            entity_id: weather.forecast_home
+          capture_response: true
+          response_template: |-
+            {% set forecasts = response["weather.forecast_home"].forecast %}
+            {% set ns = namespace(result={}) %}
+            {% for i in range([24, forecasts|length]|min) %}
+              {% set hr = as_timestamp(forecasts[i].datetime) | timestamp_custom('%-I%p') %}
+              {% set cond = forecasts[i].condition | default('unknown') %}
+              {% set temp = forecasts[i].temperature | default(0) | round | string + '°' %}
+              {% set ns.result = ns.result | combine({'h_' ~ i|string: hr ~ '|' ~ cond ~ '|' ~ temp}) %}
+            {% endfor %}
+            {{ ns.result | tojson }}
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Hourly forecast on_success triggered");
+                auto data = response["response"];
+                ESP_LOGI("weather", "Hourly forecast data keys: %d", data.size());
+
+                // Icon setter - maps HA condition string to 40px icon
+                auto set_icon = [](lv_obj_t* img, const std::string& c) {
+                  if (c == "clear-night") lv_img_set_src(img, id(clear_night_40));
+                  else if (c == "cloudy") lv_img_set_src(img, id(cloudy_40));
+                  else if (c == "exceptional") lv_img_set_src(img, id(exceptional_40));
+                  else if (c == "fog") lv_img_set_src(img, id(fog_40));
+                  else if (c == "hail") lv_img_set_src(img, id(hail_40));
+                  else if (c == "lightning") lv_img_set_src(img, id(lightning_40));
+                  else if (c == "lightning-rainy") lv_img_set_src(img, id(lightning_rainy_40));
+                  else if (c == "partlycloudy") lv_img_set_src(img, id(partlycloudy_40));
+                  else if (c == "pouring") lv_img_set_src(img, id(pouring_40));
+                  else if (c == "rainy") lv_img_set_src(img, id(rainy_40));
+                  else if (c == "snowy") lv_img_set_src(img, id(snowy_40));
+                  else if (c == "snowy-rainy") lv_img_set_src(img, id(snowy_rainy_40));
+                  else if (c == "sunny") lv_img_set_src(img, id(sunny_40));
+                  else if (c == "windy") lv_img_set_src(img, id(windy_40));
+                  else lv_img_set_src(img, id(unknown_40));
+                };
+
+                lv_obj_t* time_labels[] = {
+                  id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
+                  id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
+                  id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
+                  id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
+                  id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
+                  id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
+                };
+                lv_obj_t* icons[] = {
+                  id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
+                  id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
+                  id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
+                  id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
+                  id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
+                  id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
+                };
+                lv_obj_t* temp_labels[] = {
+                  id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
+                  id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
+                  id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
+                  id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
+                  id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
+                  id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
+                };
+
+                int count = 0;
+                for (int i = 0; i < 24; i++) {
+                  char key[8];
+                  snprintf(key, sizeof(key), "h_%d", i);
+                  if (!data[key].is<std::string>()) continue;
+                  std::string entry = data[key].as<std::string>();
+                  size_t p1 = entry.find('|');
+                  size_t p2 = entry.find('|', p1 + 1);
+                  if (p1 == std::string::npos || p2 == std::string::npos) continue;
+
+                  std::string time_str = entry.substr(0, p1);
+                  std::string cond = entry.substr(p1 + 1, p2 - p1 - 1);
+                  std::string temp = entry.substr(p2 + 1);
+
+                  lv_label_set_text(time_labels[i], time_str.c_str());
+                  set_icon(icons[i], cond);
+                  lv_label_set_text(temp_labels[i], temp.c_str());
+                  count++;
+                }
+                ESP_LOGI("weather", "Hourly forecast: updated %d hours", count);
+                if (count == 0) {
+                  ESP_LOGW("weather", "No hourly data parsed - check response_template");
+                  std::string resp_str;
+                  serializeJson(response, resp_str);
+                  ESP_LOGW("weather", "Raw response (first 300): %.300s", resp_str.c_str());
+                }
+
+          on_error:
+            - logger.log:
+                level: ERROR
+                format: "Failed to fetch hourly weather forecast from Home Assistant"
+
+# --- Style tabview on boot (after LVGL init) ---
+esphome:
+  on_boot:
+    - priority: 200
+      then:
+        - script.execute: style_forecast_tabview_dark
+
+# --- Forecast refresh ---
+interval:
+  - interval: 3600s
+    then:
+      - script.execute: fetch_weather_forecast
+      - script.execute: fetch_hourly_forecast
+
+# --- Fetch forecast on HA connection ---
+api:
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - delay: 5s
+          - script.execute: fetch_weather_forecast
+          - script.execute: fetch_hourly_forecast
+
+# --- 80px weather icons for forecast cards ---
+image:
+  rgb565:
+    alpha_channel:
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/nt_clear.svg
+        id: clear_night_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/cloudy.svg
+        id: cloudy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: exceptional_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/fog.svg
+        id: fog_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sleet.svg
+        id: hail_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancetstorms.svg
+        id: lightning_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: lightning_rainy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/partlycloudy.svg
+        id: partlycloudy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/rain.svg
+        id: pouring_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancerain.svg
+        id: rainy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/snow.svg
+        id: snowy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancesleet.svg
+        id: snowy_rainy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sunny.svg
+        id: sunny_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/windy.svg
+        id: windy_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/unknown.svg
+        id: unknown_80
+        resize: 80x80
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/circle-slash.svg
+        id: unavailable_80
+        resize: 80x80
+
+      # --- 40px weather icons for hourly forecast cards ---
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/nt_clear.svg
+        id: clear_night_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/cloudy.svg
+        id: cloudy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: exceptional_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/fog.svg
+        id: fog_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sleet.svg
+        id: hail_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancetstorms.svg
+        id: lightning_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/tstorms.svg
+        id: lightning_rainy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/partlycloudy.svg
+        id: partlycloudy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/rain.svg
+        id: pouring_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancerain.svg
+        id: rainy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/snow.svg
+        id: snowy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/chancesleet.svg
+        id: snowy_rainy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/sunny.svg
+        id: sunny_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/windy.svg
+        id: windy_40
+        resize: 40x40
+
+      - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/unknown.svg
+        id: unknown_40
+        resize: 40x40

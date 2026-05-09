@@ -1,0 +1,247 @@
+---
+# Waveshare ESP32-P4 WiFi6 Touch LCD 7B - Digital Clock + Voice Assistant
+# Full-screen clock display with voice assistant and media player
+
+substitutions:
+  icon_font: mdi_icons_40
+  text_font: nunito_20
+  text_color: white
+  bg_color: black
+  button_on_color: "ep_orange"
+  button_off_color: "very_dark_gray"
+  icon_on_color: "yellow"
+  icon_off_color: "gray"
+  label_on_color: "white"
+  label_off_color: "gray"
+  button_text_color: "white"
+  # LCD backlight modes - Code in backlight_time.yaml
+  # Day mode - starts at Sunrise - screen at 100%
+  touchscreen_daytime_brightness: "100%"
+  # Evening mode - starts at Sunset
+  touchscreen_nighttime_brightness: "65%"
+  # Night mode start time (default is midnight)
+  touchscreen_night_hour: "0"
+  touchscreen_night_minute: "0"
+  # Idle timeout - In night mode backlight goes off after this
+  touchscreen_idle_timeout: "60s"
+  screen_night_hour: '0'
+  screen_night_minute: '0'
+  clock_size: !secret clock_size
+  player_mac: !secret player_id
+  player_entity: !secret player_entity
+
+# Override micro_wake_word with larger stack size for P4 (default 3072 causes stack overflow)
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [micro_wake_word]
+
+esphome:
+  name: ws-esp32p4-touch-lcd-7b
+  friendly_name: "Waveshare ESP32-P4 Touch LCD 7B"
+  on_boot:
+    - priority: 400
+      then:
+        - script.execute: update_loading_page
+    - priority: -100
+      then:
+        - component.update: player_mac_sensor
+        - component.update: player_entity_sensor
+
+
+
+logger:
+  level: debug
+  logs:
+    lvgl: info
+  hardware_uart: USB_SERIAL_JTAG
+
+# Time update script - called by backlight_time.yaml on sync and every minute
+script:
+  - id: time_update
+    then:
+      - script.execute: update_clock_colors
+      - lvgl.label.update:
+          id: time_hours_label
+          text: !lambda 'return id(system_time).now().strftime("%l");'
+      - lvgl.label.update:
+          id: time_minutes_label
+          text: !lambda 'return id(system_time).now().strftime("%M");'
+      - lvgl.label.update:
+          id: ampm_label
+          text: !lambda 'return id(system_time).now().strftime("%p");'
+      - lvgl.label.update:
+          id: date_label
+          text: !lambda 'return id(system_time).now().strftime("%A, %B %d");'
+      - lvgl.label.update:
+          id: music_time_label
+          text: !lambda 'return id(system_time).now().strftime("%l:%M %p");'
+
+  # Called by theme_style.yaml when current_theme select changes
+  - id: on_theme_changed
+    then:
+      - script.execute: update_clock_colors
+
+  # Set colors based on sun position + theme selection
+  - id: update_clock_colors
+    then:
+      - if:
+          condition:
+            sun.is_above_horizon:
+          then:
+            - if:
+                condition:
+                  lambda: 'return id(current_theme).active_index() == 1;'
+                then:
+                  - script.execute: set_clock_colors_light
+                else:
+                  - script.execute: set_clock_colors_dark
+          else:
+            - script.execute: set_clock_colors_night
+
+  - id: set_clock_colors_dark
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: black
+          text_color: white
+      - script.execute: set_clock_page_colors_dark
+      - script.execute: set_weather_page_colors_dark
+      - script.execute: set_music_page_colors_dark
+      - script.execute: style_forecast_tabview_dark
+
+  - id: set_clock_colors_light
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: white
+          text_color: black
+      - script.execute: set_clock_page_colors_light
+      - script.execute: set_weather_page_colors_light
+      - script.execute: set_music_page_colors_light
+      - script.execute: style_forecast_tabview_light
+
+  - id: set_clock_colors_night
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: black
+          text_color: night_red
+      - script.execute: set_clock_page_colors_night
+      - script.execute: set_weather_page_colors_night
+      - script.execute: set_music_page_colors_night
+      - script.execute: style_forecast_tabview_night
+
+# Extend media player with embedded alarm sound file
+media_player:
+  - id: !extend my_media_player
+    files:
+      - id: timer_alarm_sound
+        file: sounds/timer_alarm.mp3
+
+# Voice assistant visual feedback (merges with voice_assistant from package)
+# Uses a top_layer overlay so it doesn't conflict with page_style or page content
+voice_assistant:
+  on_start:
+    - if:
+        condition:
+          lambda: "return id(timer_alarm_active);"
+        then:
+          # Dismiss the alarm, abort the pipeline, and announce "Timer stopped".
+          # Uses script.execute so it runs as a separate coroutine — the wait
+          # and TTS steps happen after on_start returns.
+          - script.execute: dismiss_timer_alarm
+        else:
+          - lvgl.obj.update:
+              id: voice_overlay
+              border_color: light_blue
+          - lvgl.widget.show: voice_overlay
+  on_listening:
+    - lvgl.obj.update:
+        id: voice_overlay
+        border_color: ep_green
+  on_end:
+    - lvgl.widget.hide: voice_overlay
+  on_error:
+    - lvgl.widget.hide: voice_overlay
+
+# Sun triggers for clock color changes (merges with sun: from backlight_time.yaml)
+sun:
+  id: sun_sun
+  on_sunset:
+    - then:
+        - script.execute: update_clock_colors
+  on_sunrise:
+    - then:
+        - script.execute: update_clock_colors
+
+packages:
+  # WiFi, captive portal, web server
+  wifi: !include esphome-modular-lvgl-buttons/common/wifi.yaml
+  # OTA updates with LVGL progress bar
+  ota_screen: !include esphome-modular-lvgl-buttons/common/ota.yaml
+  # Named colors
+  colors: !include esphome-modular-lvgl-buttons/common/color.yaml
+  # Nunito fonts (12-72px)
+  fonts: !include esphome-modular-lvgl-buttons/common/fonts.yaml
+  # MDI icon unicode mappings
+  glyphs: !include esphome-modular-lvgl-buttons/common/mdi_glyph_substitutions.yaml
+  # WiFi, CPU temp, uptime, device info sensors (stripped - no info screen labels)
+  sensors: !include sensors_clock.yaml
+  # LVGL theme, page/button styles
+  theme_style: !include esphome-modular-lvgl-buttons/common/theme_style.yaml
+  # Time sync (HA), sun tracking, brightness modes, idle dimming
+  backlight: !include esphome-modular-lvgl-buttons/common/backlight_time.yaml
+  # Board definition (chip, display, touch, audio, I2C)
+  hardware: !include esphome-modular-lvgl-buttons/hardware/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+  # Media player + voice assistant (wake word, noise suppression)
+  media_voice: !include esphome-modular-lvgl-buttons/hardware/media_player-voice_assistant.yaml
+  # Boot screen + api: with HA connection handling
+  loading_screen: !include esphome-modular-lvgl-buttons/pages/loading_480px.yaml
+  # Weather condition icon + temperature from Home Assistant
+  weather: !include weather_clock.yaml
+  # Weather detail page data (sensors, forecast, 80px icons)
+  weather_detail: !include weather_detail.yaml
+  # Clock font sizes (small/medium/large) - set clock_size in secrets.yaml
+  clock_fonts: !include clock_fonts.yaml
+  # Lyrion Music Server player (HTTP JSON-RPC, polling, playback controls)
+  music_player: !include music_player.yaml
+  # Page layouts (order matters: clock, weather, music after loading_screen)
+  clock_page: !include pages/clock_page.yaml
+  weather_page: !include pages/weather_page.yaml
+  music_page: !include pages/music_page.yaml
+  # Timers
+  timers: !include timers.yaml
+
+lvgl:
+  buffer_size: 100%
+  top_layer:
+    widgets:
+      - obj:
+          id: voice_overlay
+          hidden: true
+          width: 100%
+          height: 100%
+          bg_opa: TRANSP
+          border_width: 10
+          border_color: light_blue
+          border_opa: COVER
+          clickable: false
+          scrollable: false
+
+text_sensor:
+  - platform: template
+    name: "Player MAC"
+    id: player_mac_sensor
+    update_interval: never
+    lambda: |-
+      return {"$player_mac"};
+  - platform: template
+    name: "Player Entity"
+    id: player_entity_sensor
+    update_interval: never
+    lambda: |-
+      return {"$player_entity"};
+
+

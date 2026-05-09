@@ -1,0 +1,23 @@
+# ESPHome build artifacts and caches
+.esphome/
+
+# Secrets (WiFi credentials, API keys, location data)
+secrets.yaml
+
+# Claude Code session data
+.claude/
+
+# Backup files
+backups/
+
+# Debug logs
+debug*.txt
+
+# Setup script (local environment specific)
+setup.sh
+
+# Temporary and editor files
+*.swp
+*.swo
+*~
+*.bak

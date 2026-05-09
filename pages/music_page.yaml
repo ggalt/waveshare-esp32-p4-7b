@@ -1,0 +1,417 @@
+---
+# Music player page (LMS) - album art, track info, progress, controls, volume
+
+lvgl:
+  pages:
+    - id: music_page
+      styles: page_style
+      <<: !include ../esphome-modular-lvgl-buttons/widgets/swipe_navigation.yaml
+      widgets:
+        # Clock - top left corner
+        - label:
+            id: music_time_label
+            align: TOP_LEFT
+            x: 20
+            y: 12
+            text_font: nunito_36
+            text_color: white
+            text: ""
+        # Temperature - top right corner
+        - label:
+            id: music_temp_label
+            align: TOP_RIGHT
+            x: -20
+            y: 12
+            text_font: nunito_36
+            text_color: white
+            text: ""
+        - obj:
+            width: 100%
+            height: 100%
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              flex_align_main: CENTER
+              flex_align_cross: CENTER
+              pad_row: 12
+            pad_left: 40
+            pad_right: 40
+            widgets:
+              # --- Top row: album art placeholder + track info ---
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_main: START
+                    flex_align_cross: CENTER
+                    pad_column: 24
+                  widgets:
+                    # Album art container
+                    - obj:
+                        id: lms_art_container
+                        width: 200
+                        height: 200
+                        bg_color: 0x1A1A1A
+                        bg_opa: COVER
+                        radius: 12
+                        scrollable: false
+                        widgets:
+                          # Placeholder icon (shown when no art available)
+                          - label:
+                              id: lms_art_placeholder
+                              text_font: mdi_music_40
+                              text_color: gray
+                              align: CENTER
+                              text: $mdi_music
+                          # Real album art (hidden until first download)
+                          - image:
+                              id: lms_art_image
+                              src: lms_album_art
+                              align: CENTER
+                              hidden: true
+                    # Track info (title, artist, album)
+                    - obj:
+                        height: 200
+                        flex_grow: 1
+                        layout:
+                          type: FLEX
+                          flex_flow: COLUMN
+                          flex_align_main: CENTER
+                          flex_align_cross: START
+                          pad_row: 4
+                        widgets:
+                          - label:
+                              id: lms_title_label
+                              text_font: nunito_36
+                              text_color: white
+                              long_mode: DOT
+                              width: 100%
+                              text: "--"
+                          - label:
+                              id: lms_artist_label
+                              text_font: nunito_24
+                              text_color: gray
+                              long_mode: DOT
+                              width: 100%
+                              text: ""
+                          - label:
+                              id: lms_album_label
+                              text_font: nunito_24
+                              text_color: gray
+                              long_mode: DOT
+                              width: 100%
+                              text: ""
+
+              # --- Progress bar row ---
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_main: SPACE_BETWEEN
+                    flex_align_cross: CENTER
+                    pad_column: 12
+                  widgets:
+                    - label:
+                        id: lms_elapsed_label
+                        text_font: nunito_20
+                        text_color: gray
+                        text: "0:00"
+                    - bar:
+                        id: lms_progress_bar
+                        flex_grow: 1
+                        height: 6
+                        min_value: 0
+                        max_value: 1000
+                        value: 0
+                        indicator:
+                          bg_color: white
+                          radius: 3
+                        bg_color: 0x333333
+                        bg_opa: COVER
+                        radius: 3
+                    - label:
+                        id: lms_remaining_label
+                        text_font: nunito_20
+                        text_color: gray
+                        text: "-0:00"
+
+              # --- Playback controls row ---
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_main: CENTER
+                    flex_align_cross: CENTER
+                    pad_column: 40
+                  widgets:
+                    # Shuffle button
+                    - button:
+                        id: lms_btn_shuffle
+                        width: 48
+                        height: 48
+                        bg_opa: TRANSP
+                        on_click:
+                          - script.execute: lms_toggle_shuffle
+                        widgets:
+                          - label:
+                              id: lms_shuffle_icon_label
+                              text_font: mdi_music_40
+                              text_color: gray
+                              align: CENTER
+                              text: $mdi_shuffle_disabled
+                    # Previous button
+                    - button:
+                        id: lms_btn_prev
+                        width: 56
+                        height: 56
+                        bg_opa: TRANSP
+                        on_click:
+                          - script.execute: lms_skip_previous
+                        widgets:
+                          - label:
+                              id: lms_prev_icon_label
+                              text_font: mdi_music_40
+                              text_color: white
+                              align: CENTER
+                              text: $mdi_skip_previous
+                    # Play/Pause button
+                    - button:
+                        id: lms_btn_play
+                        width: 64
+                        height: 64
+                        radius: 32
+                        bg_color: white
+                        on_click:
+                          - script.execute: lms_play_pause
+                        widgets:
+                          - label:
+                              id: lms_play_icon_label
+                              text_font: mdi_music_40
+                              text_color: black
+                              align: CENTER
+                              text: $mdi_play
+                    # Next button
+                    - button:
+                        id: lms_btn_next
+                        width: 56
+                        height: 56
+                        bg_opa: TRANSP
+                        on_click:
+                          - script.execute: lms_skip_next
+                        widgets:
+                          - label:
+                              id: lms_next_icon_label
+                              text_font: mdi_music_40
+                              text_color: white
+                              align: CENTER
+                              text: $mdi_skip_next
+                    # Repeat button
+                    - button:
+                        id: lms_btn_repeat
+                        width: 48
+                        height: 48
+                        bg_opa: TRANSP
+                        on_click:
+                          - script.execute: lms_toggle_repeat
+                        widgets:
+                          - label:
+                              id: lms_repeat_icon_label
+                              text_font: mdi_music_40
+                              text_color: gray
+                              align: CENTER
+                              text: $mdi_repeat_off
+
+              # --- Volume row ---
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_main: CENTER
+                    flex_align_cross: CENTER
+                    pad_column: 12
+                  widgets:
+                    - label:
+                        id: lms_volume_icon
+                        text_font: mdi_music_40
+                        text_color: gray
+                        text: $mdi_volume_high
+                    - slider:
+                        id: lms_volume_slider
+                        flex_grow: 1
+                        height: 8
+                        min_value: 0
+                        max_value: 100
+                        value: 50
+                        indicator:
+                          bg_color: white
+                          radius: 4
+                        bg_color: 0x333333
+                        bg_opa: COVER
+                        radius: 4
+                        knob:
+                          bg_color: white
+                          radius: 10
+                          width: 20
+                          height: 20
+                        on_press:
+                          - lambda: 'id(lms_volume_adjusting) = true;'
+                        on_release:
+                          - lambda: |-
+                              id(lms_volume_adjusting) = false;
+                              int vol = lv_slider_get_value(id(lms_volume_slider));
+                              id(lms_volume) = vol;
+                          - script.execute:
+                              id: lms_set_volume
+                              volume_level: !lambda 'return lv_slider_get_value(id(lms_volume_slider));'
+
+script:
+  - id: set_music_page_colors_dark
+    then:
+      - lvgl.label.update:
+          id: music_time_label
+          text_color: white
+      - lvgl.label.update:
+          id: music_temp_label
+          text_color: white
+      - lvgl.label.update:
+          id: lms_title_label
+          text_color: white
+      - lvgl.label.update:
+          id: lms_artist_label
+          text_color: gray
+      - lvgl.label.update:
+          id: lms_album_label
+          text_color: gray
+      - lvgl.label.update:
+          id: lms_elapsed_label
+          text_color: gray
+      - lvgl.label.update:
+          id: lms_remaining_label
+          text_color: gray
+      - lvgl.label.update:
+          id: lms_prev_icon_label
+          text_color: white
+      - lvgl.label.update:
+          id: lms_next_icon_label
+          text_color: white
+      - lvgl.label.update:
+          id: lms_volume_icon
+          text_color: gray
+      - lambda: |-
+          // Play button: white bg, black icon
+          lv_obj_set_style_bg_color(id(lms_btn_play), lv_color_white(), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), lv_color_black(), LV_PART_MAIN);
+          // Progress bar: 0x333333 track, white indicator
+          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_white(), LV_PART_INDICATOR);
+          // Volume slider: 0x333333 track, white indicator/knob
+          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_white(), LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_white(), LV_PART_KNOB);
+          // Art container bg
+          lv_obj_set_style_bg_color(id(lms_art_container), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+
+  - id: set_music_page_colors_light
+    then:
+      - lvgl.label.update:
+          id: music_time_label
+          text_color: black
+      - lvgl.label.update:
+          id: music_temp_label
+          text_color: black
+      - lvgl.label.update:
+          id: lms_title_label
+          text_color: black
+      - lvgl.label.update:
+          id: lms_artist_label
+          text_color: gray600
+      - lvgl.label.update:
+          id: lms_album_label
+          text_color: gray600
+      - lvgl.label.update:
+          id: lms_elapsed_label
+          text_color: gray600
+      - lvgl.label.update:
+          id: lms_remaining_label
+          text_color: gray600
+      - lvgl.label.update:
+          id: lms_prev_icon_label
+          text_color: black
+      - lvgl.label.update:
+          id: lms_next_icon_label
+          text_color: black
+      - lvgl.label.update:
+          id: lms_volume_icon
+          text_color: gray600
+      - lambda: |-
+          lv_color_t black_c = lv_color_make(0x0D, 0x0D, 0x0D);
+          lv_color_t white_c = lv_color_make(0xF2, 0xF0, 0xEB);
+          lv_color_t gray300_c = lv_color_make(0xE0, 0xE0, 0xE0);
+          lv_color_t gray200_c = lv_color_make(0xEE, 0xEE, 0xEE);
+          // Play button: black bg, white icon
+          lv_obj_set_style_bg_color(id(lms_btn_play), black_c, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), white_c, LV_PART_MAIN);
+          // Progress bar: gray300 track, black indicator
+          lv_obj_set_style_bg_color(id(lms_progress_bar), gray300_c, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), black_c, LV_PART_INDICATOR);
+          // Volume slider: gray300 track, black indicator/knob
+          lv_obj_set_style_bg_color(id(lms_volume_slider), gray300_c, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), black_c, LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), black_c, LV_PART_KNOB);
+          // Art container bg
+          lv_obj_set_style_bg_color(id(lms_art_container), gray200_c, LV_PART_MAIN);
+
+  - id: set_music_page_colors_night
+    then:
+      - lvgl.label.update:
+          id: music_time_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: music_temp_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_title_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_artist_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_album_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_elapsed_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_remaining_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_prev_icon_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_next_icon_label
+          text_color: night_red
+      - lvgl.label.update:
+          id: lms_volume_icon
+          text_color: night_red
+      - lambda: |-
+          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
+          // Play button: night_red bg, black icon
+          lv_obj_set_style_bg_color(id(lms_btn_play), night_red_c, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), lv_color_black(), LV_PART_MAIN);
+          // Progress bar: 0x333333 track, night_red indicator
+          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), night_red_c, LV_PART_INDICATOR);
+          // Volume slider: 0x333333 track, night_red indicator/knob
+          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_KNOB);
+          // Art container bg
+          lv_obj_set_style_bg_color(id(lms_art_container), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);

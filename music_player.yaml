@@ -33,7 +33,7 @@ substitutions:
   lms_server_url: !secret lms_server
 
 online_image:
-  - url: "${lms_server_url}/music/current/cover.jpg?player=${lms_player_id}"
+  - url: "${lms_server_url}/music/current/cover_200x200.jpg?player=${lms_player_id}"
     id: lms_album_art
     format: JPEG
     type: RGB565
@@ -199,19 +199,11 @@ script:
                     lv_label_set_text(id(lms_play_icon_label), "\U000F040A");  // mdi_play
                   }
 
-                  // Determine inactive color based on sun/theme
-                  bool is_night = !id(sun_sun).is_above_horizon();
-                  lv_color_t active_color = is_night
-                    ? lv_color_make(0x85, 0x17, 0x17)   // night_red
-                    : lv_color_make(0xFF, 0xA5, 0x00);   // orange
-                  lv_color_t inactive_color;
-                  if (is_night) {
-                    inactive_color = lv_color_make(0x85, 0x17, 0x17);  // night_red
-                  } else if (id(current_theme).active_index() == 1) {
-                    inactive_color = lv_color_make(0x75, 0x75, 0x75);  // gray600
-                  } else {
-                    inactive_color = lv_color_make(0x80, 0x80, 0x80);  // gray
-                  }
+                  // Read active/inactive colors from centralized theme globals
+                  uint32_t ac = id(theme_active_icon_color);
+                  lv_color_t active_color = lv_color_make((ac >> 16) & 0xFF, (ac >> 8) & 0xFF, ac & 0xFF);
+                  uint32_t sc = id(theme_secondary_text_color);
+                  lv_color_t inactive_color = lv_color_make((sc >> 16) & 0xFF, (sc >> 8) & 0xFF, sc & 0xFF);
 
                   // Shuffle icon
                   if (id(lms_shuffle_mode) > 0) {

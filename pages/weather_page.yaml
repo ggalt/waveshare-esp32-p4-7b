@@ -44,12 +44,10 @@ lvgl:
                           - image:
                               id: wp_weather_condition_icon
                               src: unknown_100
-                              image_recolor: white
-                              image_recolor_opa: COVER
                           - label:
                               id: wp_condition_label
                               text_font: nunito_36
-                              text_color: white
+                              styles: primary_text_style
                               text: "--"
                     # Right: temperature + hi/lo
                     - obj:
@@ -64,12 +62,12 @@ lvgl:
                           - label:
                               id: wp_temperature_label
                               text_font: nunito_72
-                              text_color: white
+                              styles: primary_text_style
                               text: "--°F"
                           - label:
                               id: wp_hilo_label
                               text_font: nunito_24
-                              text_color: white
+                              styles: primary_text_style
                               text: "--° / --°"
 
               # --- Detail rows ---
@@ -86,12 +84,12 @@ lvgl:
                     - label:
                         id: wp_pressure_label
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "Air pressure"
                     - label:
                         id: wp_pressure_value
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "-- inHg"
 
               # Humidity
@@ -107,12 +105,12 @@ lvgl:
                     - label:
                         id: wp_humidity_label
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "Humidity"
                     - label:
                         id: wp_humidity_value
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "--%"
 
               # Wind speed
@@ -128,12 +126,12 @@ lvgl:
                     - label:
                         id: wp_wind_label
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "Wind speed"
                     - label:
                         id: wp_wind_value
                         text_font: nunito_24
-                        text_color: white
+                        styles: primary_text_style
                         text: "-- mph"
 
               # --- Forecast tabview ---
@@ -171,22 +169,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_0
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_0
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_0
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_0
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                               # Day 1
@@ -203,22 +199,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_1
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_1
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_1
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_1
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                               # Day 2
@@ -235,22 +229,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_2
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_2
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_2
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_2
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                               # Day 3
@@ -267,22 +259,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_3
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_3
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_3
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_3
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                               # Day 4
@@ -299,22 +289,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_4
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_4
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_4
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_4
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                               # Day 5
@@ -331,22 +319,20 @@ lvgl:
                                     - label:
                                         id: forecast_day_5
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--"
                                     - image:
                                         id: forecast_icon_5
                                         src: unknown_80
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: forecast_hi_5
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: "--°"
                                     - label:
                                         id: forecast_lo_5
                                         text_font: nunito_20
-                                        text_color: gray
+                                        styles: secondary_text_style
                                         text: "--°"
 
                     - name: "Hourly"
@@ -376,17 +362,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_0
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_0
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_0
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 1
                               - obj:
@@ -402,17 +386,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_1
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_1
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_1
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 2
                               - obj:
@@ -428,17 +410,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_2
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_2
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_2
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 3
                               - obj:
@@ -454,17 +434,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_3
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_3
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_3
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 4
                               - obj:
@@ -480,17 +458,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_4
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_4
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_4
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 5
                               - obj:
@@ -506,17 +482,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_5
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_5
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_5
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 6
                               - obj:
@@ -532,17 +506,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_6
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_6
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_6
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 7
                               - obj:
@@ -558,17 +530,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_7
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_7
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_7
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 8
                               - obj:
@@ -584,17 +554,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_8
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_8
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_8
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 9
                               - obj:
@@ -610,17 +578,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_9
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_9
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_9
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 10
                               - obj:
@@ -636,17 +602,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_10
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_10
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_10
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 11
                               - obj:
@@ -662,17 +626,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_11
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_11
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_11
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 12
                               - obj:
@@ -688,17 +650,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_12
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_12
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_12
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 13
                               - obj:
@@ -714,17 +674,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_13
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_13
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_13
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 14
                               - obj:
@@ -740,17 +698,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_14
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_14
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_14
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 15
                               - obj:
@@ -766,17 +722,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_15
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_15
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_15
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 16
                               - obj:
@@ -792,17 +746,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_16
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_16
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_16
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 17
                               - obj:
@@ -818,17 +770,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_17
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_17
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_17
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 18
                               - obj:
@@ -844,17 +794,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_18
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_18
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_18
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 19
                               - obj:
@@ -870,17 +818,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_19
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_19
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_19
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 20
                               - obj:
@@ -896,17 +842,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_20
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_20
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_20
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 21
                               - obj:
@@ -922,17 +866,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_21
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_21
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_21
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 22
                               - obj:
@@ -948,17 +890,15 @@ lvgl:
                                     - label:
                                         id: hourly_time_22
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_22
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_22
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                               # Hour 23
                               - obj:
@@ -974,354 +914,13 @@ lvgl:
                                     - label:
                                         id: hourly_time_23
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
                                     - image:
                                         id: hourly_icon_23
                                         src: unknown_40
-                                        image_recolor: white
-                                        image_recolor_opa: COVER
                                     - label:
                                         id: hourly_temp_23
                                         text_font: nunito_20
-                                        text_color: white
+                                        styles: primary_text_style
                                         text: ""
-
-script:
-  - id: set_weather_page_colors_dark
-    then:
-      - lvgl.label.update:
-          id: wp_condition_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_temperature_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_hilo_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_pressure_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_pressure_value
-          text_color: white
-      - lvgl.label.update:
-          id: wp_humidity_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_humidity_value
-          text_color: white
-      - lvgl.label.update:
-          id: wp_wind_label
-          text_color: white
-      - lvgl.label.update:
-          id: wp_wind_value
-          text_color: white
-      - lvgl.image.update:
-          id: wp_weather_condition_icon
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_0
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_1
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_2
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_3
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_4
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_5
-          image_recolor: white
-          image_recolor_opa: COVER
-      - lambda: |-
-          // Forecast day/hi labels → white, lo labels → gray
-          lv_color_t white_c = lv_color_make(0xF2, 0xF0, 0xEB);
-          lv_color_t gray_c = lv_color_make(0x66, 0x66, 0x66);
-          lv_obj_t* day_labels[] = {
-            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
-            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
-          };
-          lv_obj_t* hi_labels[] = {
-            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
-            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
-          };
-          lv_obj_t* lo_labels[] = {
-            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
-            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
-          };
-          for (int i = 0; i < 6; i++) {
-            lv_obj_set_style_text_color(day_labels[i], white_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hi_labels[i], white_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(lo_labels[i], gray_c, LV_PART_MAIN);
-          }
-          // Hourly icons → white
-          lv_obj_t* hourly_icons[] = {
-            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
-            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
-            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
-            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
-            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
-            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
-          };
-          for (auto* icon : hourly_icons) {
-            lv_obj_set_style_img_recolor(icon, lv_color_white(), LV_PART_MAIN);
-            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
-          }
-          // Hourly time/temp labels → white
-          lv_obj_t* hourly_time[] = {
-            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
-            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
-            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
-            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
-            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
-            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
-          };
-          lv_obj_t* hourly_temp[] = {
-            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
-            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
-            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
-            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
-            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
-            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
-          };
-          for (int i = 0; i < 24; i++) {
-            lv_obj_set_style_text_color(hourly_time[i], white_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hourly_temp[i], white_c, LV_PART_MAIN);
-          }
-
-  - id: set_weather_page_colors_light
-    then:
-      - lvgl.label.update:
-          id: wp_condition_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_temperature_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_hilo_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_pressure_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_pressure_value
-          text_color: gray600
-      - lvgl.label.update:
-          id: wp_humidity_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_humidity_value
-          text_color: gray600
-      - lvgl.label.update:
-          id: wp_wind_label
-          text_color: black
-      - lvgl.label.update:
-          id: wp_wind_value
-          text_color: gray600
-      - lvgl.image.update:
-          id: wp_weather_condition_icon
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_0
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_1
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_2
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_3
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_4
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_5
-          image_recolor: black
-          image_recolor_opa: COVER
-      - lambda: |-
-          // Forecast day/hi labels → black, lo labels → gray600
-          lv_color_t black_c = lv_color_make(0x0D, 0x0D, 0x0D);
-          lv_color_t gray600_c = lv_color_make(0x75, 0x75, 0x75);
-          lv_obj_t* day_labels[] = {
-            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
-            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
-          };
-          lv_obj_t* hi_labels[] = {
-            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
-            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
-          };
-          lv_obj_t* lo_labels[] = {
-            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
-            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
-          };
-          for (int i = 0; i < 6; i++) {
-            lv_obj_set_style_text_color(day_labels[i], black_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hi_labels[i], black_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(lo_labels[i], gray600_c, LV_PART_MAIN);
-          }
-          // Hourly icons → black
-          lv_obj_t* hourly_icons[] = {
-            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
-            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
-            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
-            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
-            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
-            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
-          };
-          for (auto* icon : hourly_icons) {
-            lv_obj_set_style_img_recolor(icon, black_c, LV_PART_MAIN);
-            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
-          }
-          // Hourly time/temp labels → black
-          lv_obj_t* hourly_time[] = {
-            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
-            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
-            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
-            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
-            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
-            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
-          };
-          lv_obj_t* hourly_temp[] = {
-            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
-            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
-            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
-            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
-            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
-            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
-          };
-          for (int i = 0; i < 24; i++) {
-            lv_obj_set_style_text_color(hourly_time[i], black_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hourly_temp[i], black_c, LV_PART_MAIN);
-          }
-
-  - id: set_weather_page_colors_night
-    then:
-      - lvgl.label.update:
-          id: wp_condition_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_temperature_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_hilo_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_pressure_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_pressure_value
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_humidity_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_humidity_value
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_wind_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: wp_wind_value
-          text_color: night_red
-      - lvgl.image.update:
-          id: wp_weather_condition_icon
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_0
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_1
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_2
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_3
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_4
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lvgl.image.update:
-          id: forecast_icon_5
-          image_recolor: night_red
-          image_recolor_opa: COVER
-      - lambda: |-
-          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
-          // Forecast day/hi/lo labels → night_red
-          lv_obj_t* day_labels[] = {
-            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
-            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
-          };
-          lv_obj_t* hi_labels[] = {
-            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
-            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
-          };
-          lv_obj_t* lo_labels[] = {
-            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
-            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
-          };
-          for (int i = 0; i < 6; i++) {
-            lv_obj_set_style_text_color(day_labels[i], night_red_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hi_labels[i], night_red_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(lo_labels[i], night_red_c, LV_PART_MAIN);
-          }
-          // Hourly icons → night_red
-          lv_obj_t* hourly_icons[] = {
-            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
-            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
-            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
-            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
-            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
-            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
-          };
-          for (auto* icon : hourly_icons) {
-            lv_obj_set_style_img_recolor(icon, night_red_c, LV_PART_MAIN);
-            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
-          }
-          // Hourly time/temp labels → night_red
-          lv_obj_t* hourly_time[] = {
-            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
-            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
-            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
-            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
-            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
-            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
-          };
-          lv_obj_t* hourly_temp[] = {
-            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
-            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
-            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
-            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
-            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
-            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
-          };
-          for (int i = 0; i < 24; i++) {
-            lv_obj_set_style_text_color(hourly_time[i], night_red_c, LV_PART_MAIN);
-            lv_obj_set_style_text_color(hourly_temp[i], night_red_c, LV_PART_MAIN);
-          }

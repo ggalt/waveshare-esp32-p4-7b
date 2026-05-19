@@ -37,6 +37,11 @@ external_components:
       path: components
     components: [micro_wake_word]
 
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
 esphome:
   name: ws-esp32p4-touch-lcd-7b
   friendly_name: "Waveshare ESP32-P4 Touch LCD 7B"
@@ -61,7 +66,7 @@ logger:
 script:
   - id: time_update
     then:
-      - script.execute: update_clock_colors
+      - script.execute: apply_theme_colors
       - lvgl.label.update:
           id: time_hours_label
           text: !lambda 'return id(system_time).now().strftime("%l");'
@@ -81,57 +86,7 @@ script:
   # Called by theme_style.yaml when current_theme select changes
   - id: on_theme_changed
     then:
-      - script.execute: update_clock_colors
-
-  # Set colors based on sun position + theme selection
-  - id: update_clock_colors
-    then:
-      - if:
-          condition:
-            sun.is_above_horizon:
-          then:
-            - if:
-                condition:
-                  lambda: 'return id(current_theme).active_index() == 1;'
-                then:
-                  - script.execute: set_clock_colors_light
-                else:
-                  - script.execute: set_clock_colors_dark
-          else:
-            - script.execute: set_clock_colors_night
-
-  - id: set_clock_colors_dark
-    then:
-      - lvgl.style.update:
-          id: page_style
-          bg_color: black
-          text_color: white
-      - script.execute: set_clock_page_colors_dark
-      - script.execute: set_weather_page_colors_dark
-      - script.execute: set_music_page_colors_dark
-      - script.execute: style_forecast_tabview_dark
-
-  - id: set_clock_colors_light
-    then:
-      - lvgl.style.update:
-          id: page_style
-          bg_color: white
-          text_color: black
-      - script.execute: set_clock_page_colors_light
-      - script.execute: set_weather_page_colors_light
-      - script.execute: set_music_page_colors_light
-      - script.execute: style_forecast_tabview_light
-
-  - id: set_clock_colors_night
-    then:
-      - lvgl.style.update:
-          id: page_style
-          bg_color: black
-          text_color: night_red
-      - script.execute: set_clock_page_colors_night
-      - script.execute: set_weather_page_colors_night
-      - script.execute: set_music_page_colors_night
-      - script.execute: style_forecast_tabview_night
+      - script.execute: apply_theme_colors
 
 # Extend media player with embedded alarm sound file
 media_player:
@@ -171,10 +126,10 @@ sun:
   id: sun_sun
   on_sunset:
     - then:
-        - script.execute: update_clock_colors
+        - script.execute: apply_theme_colors
   on_sunrise:
     - then:
-        - script.execute: update_clock_colors
+        - script.execute: apply_theme_colors
 
 packages:
   # WiFi, captive portal, web server
@@ -207,6 +162,8 @@ packages:
   clock_fonts: !include clock_fonts.yaml
   # Lyrion Music Server player (HTTP JSON-RPC, polling, playback controls)
   music_player: !include music_player.yaml
+  # Centralized theme colors (styles, globals, palette scripts)
+  theme_colors: !include theme_colors.yaml
   # Page layouts (order matters: clock, weather, music after loading_screen)
   clock_page: !include pages/clock_page.yaml
   weather_page: !include pages/weather_page.yaml

@@ -14,7 +14,7 @@ lvgl:
             x: 20
             y: 12
             text_font: nunito_36
-            text_color: white
+            styles: primary_text_style
             text: ""
         # Temperature - top right corner
         - label:
@@ -23,7 +23,7 @@ lvgl:
             x: -20
             y: 12
             text_font: nunito_36
-            text_color: white
+            styles: primary_text_style
             text: ""
         - obj:
             width: 100%
@@ -85,21 +85,21 @@ lvgl:
                           - label:
                               id: lms_title_label
                               text_font: nunito_36
-                              text_color: white
+                              styles: primary_text_style
                               long_mode: DOT
                               width: 100%
                               text: "--"
                           - label:
                               id: lms_artist_label
                               text_font: nunito_24
-                              text_color: gray
+                              styles: secondary_text_style
                               long_mode: DOT
                               width: 100%
                               text: ""
                           - label:
                               id: lms_album_label
                               text_font: nunito_24
-                              text_color: gray
+                              styles: secondary_text_style
                               long_mode: DOT
                               width: 100%
                               text: ""
@@ -118,7 +118,7 @@ lvgl:
                     - label:
                         id: lms_elapsed_label
                         text_font: nunito_20
-                        text_color: gray
+                        styles: secondary_text_style
                         text: "0:00"
                     - bar:
                         id: lms_progress_bar
@@ -136,7 +136,7 @@ lvgl:
                     - label:
                         id: lms_remaining_label
                         text_font: nunito_20
-                        text_color: gray
+                        styles: secondary_text_style
                         text: "-0:00"
 
               # --- Playback controls row ---
@@ -162,7 +162,7 @@ lvgl:
                           - label:
                               id: lms_shuffle_icon_label
                               text_font: mdi_music_40
-                              text_color: gray
+                              styles: secondary_text_style
                               align: CENTER
                               text: $mdi_shuffle_disabled
                     # Previous button
@@ -177,7 +177,7 @@ lvgl:
                           - label:
                               id: lms_prev_icon_label
                               text_font: mdi_music_40
-                              text_color: white
+                              styles: primary_text_style
                               align: CENTER
                               text: $mdi_skip_previous
                     # Play/Pause button
@@ -208,7 +208,7 @@ lvgl:
                           - label:
                               id: lms_next_icon_label
                               text_font: mdi_music_40
-                              text_color: white
+                              styles: primary_text_style
                               align: CENTER
                               text: $mdi_skip_next
                     # Repeat button
@@ -223,7 +223,7 @@ lvgl:
                           - label:
                               id: lms_repeat_icon_label
                               text_font: mdi_music_40
-                              text_color: gray
+                              styles: secondary_text_style
                               align: CENTER
                               text: $mdi_repeat_off
 
@@ -241,7 +241,7 @@ lvgl:
                     - label:
                         id: lms_volume_icon
                         text_font: mdi_music_40
-                        text_color: gray
+                        styles: secondary_text_style
                         text: $mdi_volume_high
                     - slider:
                         id: lms_volume_slider
@@ -271,147 +271,3 @@ lvgl:
                           - script.execute:
                               id: lms_set_volume
                               volume_level: !lambda 'return lv_slider_get_value(id(lms_volume_slider));'
-
-script:
-  - id: set_music_page_colors_dark
-    then:
-      - lvgl.label.update:
-          id: music_time_label
-          text_color: white
-      - lvgl.label.update:
-          id: music_temp_label
-          text_color: white
-      - lvgl.label.update:
-          id: lms_title_label
-          text_color: white
-      - lvgl.label.update:
-          id: lms_artist_label
-          text_color: gray
-      - lvgl.label.update:
-          id: lms_album_label
-          text_color: gray
-      - lvgl.label.update:
-          id: lms_elapsed_label
-          text_color: gray
-      - lvgl.label.update:
-          id: lms_remaining_label
-          text_color: gray
-      - lvgl.label.update:
-          id: lms_prev_icon_label
-          text_color: white
-      - lvgl.label.update:
-          id: lms_next_icon_label
-          text_color: white
-      - lvgl.label.update:
-          id: lms_volume_icon
-          text_color: gray
-      - lambda: |-
-          // Play button: white bg, black icon
-          lv_obj_set_style_bg_color(id(lms_btn_play), lv_color_white(), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(lms_play_icon_label), lv_color_black(), LV_PART_MAIN);
-          // Progress bar: 0x333333 track, white indicator
-          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_white(), LV_PART_INDICATOR);
-          // Volume slider: 0x333333 track, white indicator/knob
-          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_white(), LV_PART_INDICATOR);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_white(), LV_PART_KNOB);
-          // Art container bg
-          lv_obj_set_style_bg_color(id(lms_art_container), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
-
-  - id: set_music_page_colors_light
-    then:
-      - lvgl.label.update:
-          id: music_time_label
-          text_color: black
-      - lvgl.label.update:
-          id: music_temp_label
-          text_color: black
-      - lvgl.label.update:
-          id: lms_title_label
-          text_color: black
-      - lvgl.label.update:
-          id: lms_artist_label
-          text_color: gray600
-      - lvgl.label.update:
-          id: lms_album_label
-          text_color: gray600
-      - lvgl.label.update:
-          id: lms_elapsed_label
-          text_color: gray600
-      - lvgl.label.update:
-          id: lms_remaining_label
-          text_color: gray600
-      - lvgl.label.update:
-          id: lms_prev_icon_label
-          text_color: black
-      - lvgl.label.update:
-          id: lms_next_icon_label
-          text_color: black
-      - lvgl.label.update:
-          id: lms_volume_icon
-          text_color: gray600
-      - lambda: |-
-          lv_color_t black_c = lv_color_make(0x0D, 0x0D, 0x0D);
-          lv_color_t white_c = lv_color_make(0xF2, 0xF0, 0xEB);
-          lv_color_t gray300_c = lv_color_make(0xE0, 0xE0, 0xE0);
-          lv_color_t gray200_c = lv_color_make(0xEE, 0xEE, 0xEE);
-          // Play button: black bg, white icon
-          lv_obj_set_style_bg_color(id(lms_btn_play), black_c, LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(lms_play_icon_label), white_c, LV_PART_MAIN);
-          // Progress bar: gray300 track, black indicator
-          lv_obj_set_style_bg_color(id(lms_progress_bar), gray300_c, LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_progress_bar), black_c, LV_PART_INDICATOR);
-          // Volume slider: gray300 track, black indicator/knob
-          lv_obj_set_style_bg_color(id(lms_volume_slider), gray300_c, LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), black_c, LV_PART_INDICATOR);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), black_c, LV_PART_KNOB);
-          // Art container bg
-          lv_obj_set_style_bg_color(id(lms_art_container), gray200_c, LV_PART_MAIN);
-
-  - id: set_music_page_colors_night
-    then:
-      - lvgl.label.update:
-          id: music_time_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: music_temp_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_title_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_artist_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_album_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_elapsed_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_remaining_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_prev_icon_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_next_icon_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: lms_volume_icon
-          text_color: night_red
-      - lambda: |-
-          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
-          // Play button: night_red bg, black icon
-          lv_obj_set_style_bg_color(id(lms_btn_play), night_red_c, LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(lms_play_icon_label), lv_color_black(), LV_PART_MAIN);
-          // Progress bar: 0x333333 track, night_red indicator
-          lv_obj_set_style_bg_color(id(lms_progress_bar), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_progress_bar), night_red_c, LV_PART_INDICATOR);
-          // Volume slider: 0x333333 track, night_red indicator/knob
-          lv_obj_set_style_bg_color(id(lms_volume_slider), lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_INDICATOR);
-          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_KNOB);
-          // Art container bg
-          lv_obj_set_style_bg_color(id(lms_art_container), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);

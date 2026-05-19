@@ -2,10 +2,6 @@
 # Clock page - main_page with full-screen clock, weather icon, temperature
 # Named main_page because loading_480px.yaml hardcodes lvgl.page.show: main_page after boot
 
-color:
-  - id: night_red
-    hex: '851717'
-
 globals:
   - id: colon_visible
     type: bool
@@ -29,15 +25,13 @@ lvgl:
       styles: page_style
       <<: !include ../esphome-modular-lvgl-buttons/widgets/swipe_navigation.yaml
       widgets:
-        # Weather icon - top left corner (recolored for dark background)
+        # Weather icon - top left corner
         - image:
             id: weather_condition_icon
             align: TOP_LEFT
             x: 20
             y: 20
             src: unknown_100
-            image_recolor: white
-            image_recolor_opa: COVER
         # Temperature - top right corner
         - label:
             id: weather_temperature_label
@@ -45,7 +39,7 @@ lvgl:
             x: -20
             y: 20
             text_font: nunito_48
-            text_color: white
+            styles: primary_text_style
             text: "--°"
         # Centered clock
         - obj:
@@ -70,102 +64,26 @@ lvgl:
                     - label:
                         id: time_hours_label
                         text_font: clock_time_font_${clock_size}
-                        text_color: white
+                        styles: primary_text_style
                         text: "12"
                     - label:
                         id: time_colon_label
                         text_font: clock_time_font_${clock_size}
-                        text_color: white
+                        styles: primary_text_style
                         text: ":"
                     - label:
                         id: time_minutes_label
                         text_font: clock_time_font_${clock_size}
-                        text_color: white
+                        styles: primary_text_style
                         text: "00"
                     - label:
                         id: ampm_label
                         text_font: clock_ampm_font_${clock_size}
-                        text_color: white
+                        styles: primary_text_style
                         text: "AM"
                         pad_bottom: ${clock_ampm_pad_${clock_size}}
               - label:
                   id: date_label
                   text_font: nunito_36
-                  text_color: white
+                  styles: primary_text_style
                   text: "Monday, January 01"
-
-script:
-  - id: set_clock_page_colors_dark
-    then:
-      - lvgl.label.update:
-          id: time_hours_label
-          text_color: white
-      - lvgl.label.update:
-          id: time_colon_label
-          text_color: white
-      - lvgl.label.update:
-          id: time_minutes_label
-          text_color: white
-      - lvgl.label.update:
-          id: ampm_label
-          text_color: white
-      - lvgl.label.update:
-          id: date_label
-          text_color: white
-      - lvgl.label.update:
-          id: weather_temperature_label
-          text_color: white
-      - lvgl.image.update:
-          id: weather_condition_icon
-          image_recolor: white
-          image_recolor_opa: COVER
-
-  - id: set_clock_page_colors_light
-    then:
-      - lvgl.label.update:
-          id: time_hours_label
-          text_color: black
-      - lvgl.label.update:
-          id: time_colon_label
-          text_color: black
-      - lvgl.label.update:
-          id: time_minutes_label
-          text_color: black
-      - lvgl.label.update:
-          id: ampm_label
-          text_color: black
-      - lvgl.label.update:
-          id: date_label
-          text_color: black
-      - lvgl.label.update:
-          id: weather_temperature_label
-          text_color: black
-      - lvgl.image.update:
-          id: weather_condition_icon
-          image_recolor: black
-          image_recolor_opa: COVER
-
-  - id: set_clock_page_colors_night
-    then:
-      - lvgl.label.update:
-          id: time_hours_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: time_colon_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: time_minutes_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: ampm_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: date_label
-          text_color: night_red
-      - lvgl.label.update:
-          id: weather_temperature_label
-          text_color: night_red
-      - lvgl.image.update:
-          id: weather_condition_icon
-          image_recolor: night_red
-          image_recolor_opa: COVER

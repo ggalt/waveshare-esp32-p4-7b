@@ -1,0 +1,452 @@
+---
+# Centralized theme color system
+# Defines semantic color tokens for dark/light/night modes.
+# All visual elements reference these tokens so changing a color here updates it everywhere.
+
+color:
+  - id: night_red
+    hex: '851717'
+
+lvgl:
+  style_definitions:
+    - id: primary_text_style
+      text_color: white        # dark mode default
+    - id: secondary_text_style
+      text_color: gray         # dark mode default
+
+globals:
+  - id: theme_active_icon_color
+    type: uint32_t
+    initial_value: '0xFFA500'   # orange (dark mode default)
+  - id: theme_secondary_text_color
+    type: uint32_t
+    initial_value: '0x666666'   # gray (dark mode default)
+
+script:
+  # Orchestrator: checks sun position + theme index, calls the appropriate palette
+  - id: apply_theme_colors
+    then:
+      - if:
+          condition:
+            sun.is_above_horizon:
+          then:
+            - if:
+                condition:
+                  lambda: 'return id(current_theme).active_index() == 1;'
+                then:
+                  - script.execute: set_palette_light
+                else:
+                  - script.execute: set_palette_dark
+          else:
+            - script.execute: set_palette_night
+
+  # --- Dark palette ---
+  - id: set_palette_dark
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: black
+      - lvgl.style.update:
+          id: primary_text_style
+          text_color: white
+      - lvgl.style.update:
+          id: secondary_text_style
+          text_color: gray
+      - lambda: |-
+          id(theme_active_icon_color) = 0xFFA500;   // orange
+          id(theme_secondary_text_color) = 0x666666; // gray
+      - lambda: |-
+          lv_color_t primary = lv_color_make(0xF2, 0xF0, 0xEB);    // white
+          lv_color_t secondary = lv_color_make(0x66, 0x66, 0x66);   // gray
+          lv_color_t icon_recolor = lv_color_make(0xF2, 0xF0, 0xEB);
+          lv_color_t accent_bg = lv_color_make(0xF2, 0xF0, 0xEB);   // white
+          lv_color_t accent_text = lv_color_make(0x0D, 0x0D, 0x0D); // black
+          lv_color_t track_bg = lv_color_make(0x33, 0x33, 0x33);
+          lv_color_t track_ind = lv_color_make(0xF2, 0xF0, 0xEB);   // white
+          lv_color_t surface_bg = lv_color_make(0x1A, 0x1A, 0x1A);
+          lv_color_t tab_bg = lv_color_make(0x0D, 0x0D, 0x0D);      // black
+          lv_color_t tab_text = lv_color_make(0xF2, 0xF0, 0xEB);    // white
+
+          // --- Clock page: weather icon ---
+          lv_obj_set_style_img_recolor(id(weather_condition_icon), icon_recolor, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: condition icon ---
+          lv_obj_set_style_img_recolor(id(wp_weather_condition_icon), icon_recolor, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(wp_weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: forecast icons (6) ---
+          lv_obj_t* forecast_icons[] = {
+            id(forecast_icon_0), id(forecast_icon_1), id(forecast_icon_2),
+            id(forecast_icon_3), id(forecast_icon_4), id(forecast_icon_5)
+          };
+          for (auto* icon : forecast_icons) {
+            lv_obj_set_style_img_recolor(icon, icon_recolor, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly icons (24) ---
+          lv_obj_t* hourly_icons[] = {
+            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
+            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
+            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
+            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
+            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
+            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
+          };
+          for (auto* icon : hourly_icons) {
+            lv_obj_set_style_img_recolor(icon, icon_recolor, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: forecast day/hi → primary, lo → secondary ---
+          lv_obj_t* day_labels[] = {
+            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
+            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
+          };
+          lv_obj_t* hi_labels[] = {
+            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
+            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
+          };
+          lv_obj_t* lo_labels[] = {
+            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
+            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
+          };
+          for (int i = 0; i < 6; i++) {
+            lv_obj_set_style_text_color(day_labels[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hi_labels[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(lo_labels[i], secondary, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly time/temp labels → primary ---
+          lv_obj_t* hourly_time[] = {
+            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
+            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
+            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
+            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
+            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
+            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
+          };
+          lv_obj_t* hourly_temp[] = {
+            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
+            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
+            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
+            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
+            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
+            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
+          };
+          for (int i = 0; i < 24; i++) {
+            lv_obj_set_style_text_color(hourly_time[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hourly_temp[i], primary, LV_PART_MAIN);
+          }
+
+          // --- Music page: play button ---
+          lv_obj_set_style_bg_color(id(lms_btn_play), accent_bg, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), accent_text, LV_PART_MAIN);
+
+          // --- Music page: progress bar ---
+          lv_obj_set_style_bg_color(id(lms_progress_bar), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), track_ind, LV_PART_INDICATOR);
+
+          // --- Music page: volume slider ---
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_ind, LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_ind, LV_PART_KNOB);
+
+          // --- Music page: art container ---
+          lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
+
+          // --- Weather page: tabview ---
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, tab_text, LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, tab_text, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, tab_bg, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+  # --- Light palette ---
+  - id: set_palette_light
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: white
+      - lvgl.style.update:
+          id: primary_text_style
+          text_color: black
+      - lvgl.style.update:
+          id: secondary_text_style
+          text_color: gray600
+      - lambda: |-
+          id(theme_active_icon_color) = 0xFFA500;   // orange
+          id(theme_secondary_text_color) = 0x757575; // gray600
+      - lambda: |-
+          lv_color_t primary = lv_color_make(0x0D, 0x0D, 0x0D);     // black
+          lv_color_t secondary = lv_color_make(0x75, 0x75, 0x75);    // gray600
+          lv_color_t icon_recolor = lv_color_make(0x0D, 0x0D, 0x0D);
+          lv_color_t accent_bg = lv_color_make(0x0D, 0x0D, 0x0D);    // black
+          lv_color_t accent_text = lv_color_make(0xF2, 0xF0, 0xEB);  // white
+          lv_color_t track_bg = lv_color_make(0xE0, 0xE0, 0xE0);     // gray300
+          lv_color_t track_ind = lv_color_make(0x0D, 0x0D, 0x0D);    // black
+          lv_color_t surface_bg = lv_color_make(0xEE, 0xEE, 0xEE);   // gray200
+          lv_color_t tab_bg = lv_color_make(0xF2, 0xF0, 0xEB);       // white
+          lv_color_t tab_text = lv_color_make(0x0D, 0x0D, 0x0D);     // black
+
+          // --- Clock page: weather icon ---
+          lv_obj_set_style_img_recolor(id(weather_condition_icon), icon_recolor, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: condition icon ---
+          lv_obj_set_style_img_recolor(id(wp_weather_condition_icon), icon_recolor, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(wp_weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: forecast icons (6) ---
+          lv_obj_t* forecast_icons[] = {
+            id(forecast_icon_0), id(forecast_icon_1), id(forecast_icon_2),
+            id(forecast_icon_3), id(forecast_icon_4), id(forecast_icon_5)
+          };
+          for (auto* icon : forecast_icons) {
+            lv_obj_set_style_img_recolor(icon, icon_recolor, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly icons (24) ---
+          lv_obj_t* hourly_icons[] = {
+            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
+            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
+            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
+            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
+            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
+            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
+          };
+          for (auto* icon : hourly_icons) {
+            lv_obj_set_style_img_recolor(icon, icon_recolor, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: forecast day/hi → primary, lo → secondary ---
+          lv_obj_t* day_labels[] = {
+            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
+            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
+          };
+          lv_obj_t* hi_labels[] = {
+            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
+            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
+          };
+          lv_obj_t* lo_labels[] = {
+            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
+            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
+          };
+          for (int i = 0; i < 6; i++) {
+            lv_obj_set_style_text_color(day_labels[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hi_labels[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(lo_labels[i], secondary, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly time/temp labels → primary ---
+          lv_obj_t* hourly_time[] = {
+            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
+            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
+            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
+            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
+            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
+            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
+          };
+          lv_obj_t* hourly_temp[] = {
+            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
+            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
+            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
+            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
+            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
+            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
+          };
+          for (int i = 0; i < 24; i++) {
+            lv_obj_set_style_text_color(hourly_time[i], primary, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hourly_temp[i], primary, LV_PART_MAIN);
+          }
+
+          // --- Weather detail values: light mode uses secondary (gray600) ---
+          lv_obj_set_style_text_color(id(wp_pressure_value), secondary, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(wp_humidity_value), secondary, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(wp_wind_value), secondary, LV_PART_MAIN);
+
+          // --- Music page: play button ---
+          lv_obj_set_style_bg_color(id(lms_btn_play), accent_bg, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), accent_text, LV_PART_MAIN);
+
+          // --- Music page: progress bar ---
+          lv_obj_set_style_bg_color(id(lms_progress_bar), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), track_ind, LV_PART_INDICATOR);
+
+          // --- Music page: volume slider ---
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_ind, LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_ind, LV_PART_KNOB);
+
+          // --- Music page: art container ---
+          lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
+
+          // --- Weather page: tabview ---
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, tab_text, LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, tab_text, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, tab_bg, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+  # --- Night palette ---
+  - id: set_palette_night
+    then:
+      - lvgl.style.update:
+          id: page_style
+          bg_color: black
+      - lvgl.style.update:
+          id: primary_text_style
+          text_color: night_red
+      - lvgl.style.update:
+          id: secondary_text_style
+          text_color: night_red
+      - lambda: |-
+          id(theme_active_icon_color) = 0x851717;   // night_red
+          id(theme_secondary_text_color) = 0x851717; // night_red
+      - lambda: |-
+          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
+          lv_color_t accent_text = lv_color_make(0x0D, 0x0D, 0x0D);  // black
+          lv_color_t track_bg = lv_color_make(0x33, 0x33, 0x33);
+          lv_color_t surface_bg = lv_color_make(0x1A, 0x1A, 0x1A);
+          lv_color_t tab_bg = lv_color_make(0x0D, 0x0D, 0x0D);       // black
+
+          // --- Clock page: weather icon ---
+          lv_obj_set_style_img_recolor(id(weather_condition_icon), night_red_c, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: condition icon ---
+          lv_obj_set_style_img_recolor(id(wp_weather_condition_icon), night_red_c, LV_PART_MAIN);
+          lv_obj_set_style_img_recolor_opa(id(wp_weather_condition_icon), LV_OPA_COVER, LV_PART_MAIN);
+
+          // --- Weather page: forecast icons (6) ---
+          lv_obj_t* forecast_icons[] = {
+            id(forecast_icon_0), id(forecast_icon_1), id(forecast_icon_2),
+            id(forecast_icon_3), id(forecast_icon_4), id(forecast_icon_5)
+          };
+          for (auto* icon : forecast_icons) {
+            lv_obj_set_style_img_recolor(icon, night_red_c, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly icons (24) ---
+          lv_obj_t* hourly_icons[] = {
+            id(hourly_icon_0), id(hourly_icon_1), id(hourly_icon_2), id(hourly_icon_3),
+            id(hourly_icon_4), id(hourly_icon_5), id(hourly_icon_6), id(hourly_icon_7),
+            id(hourly_icon_8), id(hourly_icon_9), id(hourly_icon_10), id(hourly_icon_11),
+            id(hourly_icon_12), id(hourly_icon_13), id(hourly_icon_14), id(hourly_icon_15),
+            id(hourly_icon_16), id(hourly_icon_17), id(hourly_icon_18), id(hourly_icon_19),
+            id(hourly_icon_20), id(hourly_icon_21), id(hourly_icon_22), id(hourly_icon_23)
+          };
+          for (auto* icon : hourly_icons) {
+            lv_obj_set_style_img_recolor(icon, night_red_c, LV_PART_MAIN);
+            lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, LV_PART_MAIN);
+          }
+
+          // --- Weather page: forecast day/hi/lo labels → night_red ---
+          lv_obj_t* day_labels[] = {
+            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2),
+            id(forecast_day_3), id(forecast_day_4), id(forecast_day_5)
+          };
+          lv_obj_t* hi_labels[] = {
+            id(forecast_hi_0), id(forecast_hi_1), id(forecast_hi_2),
+            id(forecast_hi_3), id(forecast_hi_4), id(forecast_hi_5)
+          };
+          lv_obj_t* lo_labels[] = {
+            id(forecast_lo_0), id(forecast_lo_1), id(forecast_lo_2),
+            id(forecast_lo_3), id(forecast_lo_4), id(forecast_lo_5)
+          };
+          for (int i = 0; i < 6; i++) {
+            lv_obj_set_style_text_color(day_labels[i], night_red_c, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hi_labels[i], night_red_c, LV_PART_MAIN);
+            lv_obj_set_style_text_color(lo_labels[i], night_red_c, LV_PART_MAIN);
+          }
+
+          // --- Weather page: hourly time/temp labels → night_red ---
+          lv_obj_t* hourly_time[] = {
+            id(hourly_time_0), id(hourly_time_1), id(hourly_time_2), id(hourly_time_3),
+            id(hourly_time_4), id(hourly_time_5), id(hourly_time_6), id(hourly_time_7),
+            id(hourly_time_8), id(hourly_time_9), id(hourly_time_10), id(hourly_time_11),
+            id(hourly_time_12), id(hourly_time_13), id(hourly_time_14), id(hourly_time_15),
+            id(hourly_time_16), id(hourly_time_17), id(hourly_time_18), id(hourly_time_19),
+            id(hourly_time_20), id(hourly_time_21), id(hourly_time_22), id(hourly_time_23)
+          };
+          lv_obj_t* hourly_temp[] = {
+            id(hourly_temp_0), id(hourly_temp_1), id(hourly_temp_2), id(hourly_temp_3),
+            id(hourly_temp_4), id(hourly_temp_5), id(hourly_temp_6), id(hourly_temp_7),
+            id(hourly_temp_8), id(hourly_temp_9), id(hourly_temp_10), id(hourly_temp_11),
+            id(hourly_temp_12), id(hourly_temp_13), id(hourly_temp_14), id(hourly_temp_15),
+            id(hourly_temp_16), id(hourly_temp_17), id(hourly_temp_18), id(hourly_temp_19),
+            id(hourly_temp_20), id(hourly_temp_21), id(hourly_temp_22), id(hourly_temp_23)
+          };
+          for (int i = 0; i < 24; i++) {
+            lv_obj_set_style_text_color(hourly_time[i], night_red_c, LV_PART_MAIN);
+            lv_obj_set_style_text_color(hourly_temp[i], night_red_c, LV_PART_MAIN);
+          }
+
+          // --- Music page: play button ---
+          lv_obj_set_style_bg_color(id(lms_btn_play), night_red_c, LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(lms_play_icon_label), accent_text, LV_PART_MAIN);
+
+          // --- Music page: progress bar ---
+          lv_obj_set_style_bg_color(id(lms_progress_bar), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_progress_bar), night_red_c, LV_PART_INDICATOR);
+
+          // --- Music page: volume slider ---
+          lv_obj_set_style_bg_color(id(lms_volume_slider), track_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_INDICATOR);
+          lv_obj_set_style_bg_color(id(lms_volume_slider), night_red_c, LV_PART_KNOB);
+
+          // --- Music page: art container ---
+          lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
+
+          // --- Weather page: tabview ---
+          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
+          lv_obj_set_style_bg_color(tab_btns, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
+          lv_obj_set_style_text_color(tab_btns, night_red_c, LV_PART_ITEMS);
+          lv_obj_set_style_text_color(tab_btns, night_red_c, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
+          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
+
+          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
+          lv_obj_set_style_bg_color(content, tab_bg, LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
+
+          uint32_t child_cnt = lv_obj_get_child_cnt(content);
+          for (uint32_t i = 0; i < child_cnt; i++) {
+            lv_obj_t* tab_page = lv_obj_get_child(content, i);
+            lv_obj_set_style_bg_color(tab_page, tab_bg, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
+          }

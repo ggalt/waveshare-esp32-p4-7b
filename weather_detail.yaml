@@ -430,81 +430,6 @@ script:
           else if (c == "windy") lv_img_set_src(id(forecast_icon_5), id(windy_80));
           else lv_img_set_src(id(forecast_icon_5), id(unknown_80));
 
-  # Style the forecast tabview - dark mode (black bg, white text)
-  - id: style_forecast_tabview_dark
-    then:
-      - lambda: |-
-          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
-          lv_obj_set_style_bg_color(tab_btns, lv_color_black(), LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
-          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
-          lv_obj_set_style_text_color(tab_btns, lv_color_white(), LV_PART_ITEMS);
-          lv_obj_set_style_text_color(tab_btns, lv_color_white(), (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-
-          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
-          lv_obj_set_style_bg_color(content, lv_color_black(), LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
-
-          uint32_t child_cnt = lv_obj_get_child_cnt(content);
-          for (uint32_t i = 0; i < child_cnt; i++) {
-            lv_obj_t* tab_page = lv_obj_get_child(content, i);
-            lv_obj_set_style_bg_color(tab_page, lv_color_black(), LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
-          }
-
-  # Style the forecast tabview - light mode (white bg, black text)
-  - id: style_forecast_tabview_light
-    then:
-      - lambda: |-
-          lv_color_t white_c = lv_color_make(0xF2, 0xF0, 0xEB);
-          lv_color_t black_c = lv_color_make(0x0D, 0x0D, 0x0D);
-          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
-          lv_obj_set_style_bg_color(tab_btns, white_c, LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
-          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
-          lv_obj_set_style_text_color(tab_btns, black_c, LV_PART_ITEMS);
-          lv_obj_set_style_text_color(tab_btns, black_c, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-
-          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
-          lv_obj_set_style_bg_color(content, white_c, LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
-
-          uint32_t child_cnt = lv_obj_get_child_cnt(content);
-          for (uint32_t i = 0; i < child_cnt; i++) {
-            lv_obj_t* tab_page = lv_obj_get_child(content, i);
-            lv_obj_set_style_bg_color(tab_page, white_c, LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
-          }
-
-  # Style the forecast tabview - night mode (black bg, night_red text)
-  - id: style_forecast_tabview_night
-    then:
-      - lambda: |-
-          lv_color_t night_red_c = lv_color_make(0x85, 0x17, 0x17);
-          lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
-          lv_obj_set_style_bg_color(tab_btns, lv_color_black(), LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_COVER, LV_PART_MAIN);
-          lv_obj_set_style_border_width(tab_btns, 0, LV_PART_MAIN);
-          lv_obj_set_style_text_color(tab_btns, night_red_c, LV_PART_ITEMS);
-          lv_obj_set_style_text_color(tab_btns, night_red_c, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_ITEMS);
-          lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, (uint32_t)LV_PART_ITEMS | (uint32_t)LV_STATE_CHECKED);
-
-          lv_obj_t* content = lv_tabview_get_content(id(forecast_tabview));
-          lv_obj_set_style_bg_color(content, lv_color_black(), LV_PART_MAIN);
-          lv_obj_set_style_bg_opa(content, LV_OPA_COVER, LV_PART_MAIN);
-
-          uint32_t child_cnt = lv_obj_get_child_cnt(content);
-          for (uint32_t i = 0; i < child_cnt; i++) {
-            lv_obj_t* tab_page = lv_obj_get_child(content, i);
-            lv_obj_set_style_bg_color(tab_page, lv_color_black(), LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(tab_page, LV_OPA_COVER, LV_PART_MAIN);
-          }
-
 # --- Hourly forecast fetch script ---
   - id: fetch_hourly_forecast
     then:
@@ -614,7 +539,7 @@ esphome:
   on_boot:
     - priority: 200
       then:
-        - script.execute: style_forecast_tabview_dark
+        - script.execute: apply_theme_colors
 
 # --- Forecast refresh ---
 interval:

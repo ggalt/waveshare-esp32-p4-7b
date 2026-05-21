@@ -21,11 +21,21 @@ font:
       $mdi_repeat_off,
       $mdi_volume_high,
       $mdi_music,
+      $mdi_server_off,
+      $mdi_lan_disconnect,
+    ]
+  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: mdi_music_80
+    size: 80
+    bpp: 8
+    glyphs: [
+      $mdi_server_off,
+      $mdi_lan_disconnect,
     ]
 
 http_request:
   useragent: esphome/music-player
-  timeout: 5s
+  timeout: 2s
   verify_ssl: false
 
 substitutions:
@@ -77,11 +87,37 @@ globals:
   - id: lms_current_title
     type: std::string
     initial_value: '""'
+  - id: lms_music_page_active
+    type: bool
+    initial_value: 'false'
+  - id: lms_fail_count
+    type: int
+    initial_value: '0'
+  - id: lms_backoff_ticks
+    type: int
+    initial_value: '1'
+  - id: lms_tick_counter
+    type: int
+    initial_value: '0'
+  - id: lms_offline_state
+    type: int
+    initial_value: '0'
 
 interval:
   - interval: 3s
     then:
-      - script.execute: lms_poll_status
+      - lambda: |-
+          int tick = id(lms_tick_counter) + 1;
+          // When music page is inactive, poll at most every ~30s (10 ticks)
+          int required_ticks = id(lms_music_page_active)
+                               ? id(lms_backoff_ticks)
+                               : std::max(id(lms_backoff_ticks), 10);
+          if (tick >= required_ticks) {
+            id(lms_tick_counter) = 0;
+            id(lms_poll_status).execute();
+          } else {
+            id(lms_tick_counter) = tick;
+          }
 
 script:
   # Poll LMS for current player status
@@ -96,13 +132,40 @@ script:
                    std::string("${lms_player_id}") + "\",[\"status\",\"-\",\"1\",\"tags:aldKJ\"]]}";
           capture_response: true
           max_response_buffer_size: 2048
+          on_error:
+            then:
+              - lambda: |-
+                  int fails = id(lms_fail_count) + 1;
+                  id(lms_fail_count) = fails;
+                  int bo = std::min(id(lms_backoff_ticks) * 2, 20);
+                  id(lms_backoff_ticks) = bo;
+                  if (fails == 1 || fails % 10 == 0) {
+                    ESP_LOGW("lms", "HTTP request error (fail #%d, next poll in %ds)", fails, bo * 3);
+                  }
+                  id(lms_offline_state) = 1;
+                  id(lms_update_overlay).execute();
           on_response:
             then:
               - lambda: |-
                   if (response->status_code != 200) {
-                    ESP_LOGW("lms", "HTTP error: %d", response->status_code);
+                    int fails = id(lms_fail_count) + 1;
+                    id(lms_fail_count) = fails;
+                    int bo = std::min(id(lms_backoff_ticks) * 2, 20);
+                    id(lms_backoff_ticks) = bo;
+                    if (fails == 1 || fails % 10 == 0) {
+                      ESP_LOGW("lms", "HTTP error %d (fail #%d, next poll in %ds)", response->status_code, fails, bo * 3);
+                    }
+                    id(lms_offline_state) = 2;
+                    id(lms_update_overlay).execute();
                     return;
                   }
+
+                  // Reset backoff on success
+                  if (id(lms_fail_count) > 0) {
+                    ESP_LOGI("lms", "LMS server recovered after %d failures", id(lms_fail_count));
+                  }
+                  id(lms_fail_count) = 0;
+                  id(lms_backoff_ticks) = 1;
 
                   // Parse JSON response
                   ArduinoJson::JsonDocument doc;
@@ -116,6 +179,16 @@ script:
                   if (result.isNull()) {
                     ESP_LOGW("lms", "No result in response");
                     return;
+                  }
+
+                  // Check if player is connected
+                  int player_connected = result["player_connected"] | 1;
+                  if (player_connected == 0) {
+                    id(lms_offline_state) = 2;
+                    id(lms_update_overlay).execute();
+                  } else if (id(lms_offline_state) != 0) {
+                    id(lms_offline_state) = 0;
+                    id(lms_update_overlay).execute();
                   }
 
                   // Player mode (play/pause/stop)
@@ -225,6 +298,30 @@ script:
                     lv_label_set_text(id(lms_repeat_icon_label), "\U000F0457");  // mdi_repeat_off
                     lv_obj_set_style_text_color(id(lms_repeat_icon_label), inactive_color, LV_PART_MAIN);
                   }
+
+  # Force an immediate poll (called when music page loads)
+  - id: lms_force_poll
+    then:
+      - lambda: 'id(lms_tick_counter) = 0;'
+      - script.execute: lms_poll_status
+
+  # Update the offline overlay based on lms_offline_state
+  - id: lms_update_overlay
+    then:
+      - lambda: |-
+          int state = id(lms_offline_state);
+          if (state == 0) {
+            lv_obj_add_flag(id(lms_offline_overlay), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            if (state == 1) {
+              lv_label_set_text(id(lms_offline_icon), "\U000F048F");
+              lv_label_set_text(id(lms_offline_msg), "Server Unavailable");
+            } else {
+              lv_label_set_text(id(lms_offline_icon), "\U000F0319");
+              lv_label_set_text(id(lms_offline_msg), "Player Offline");
+            }
+            lv_obj_clear_flag(id(lms_offline_overlay), LV_OBJ_FLAG_HIDDEN);
+          }
 
   # Toggle play/pause
   - id: lms_play_pause

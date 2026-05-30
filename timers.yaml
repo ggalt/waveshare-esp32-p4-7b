@@ -36,19 +36,34 @@ script:
           condition:
             lambda: "return id(timer_alarm_active);"
           then:
-            - media_player.speaker.play_on_device_media_file:
-                id: my_media_player
-                media_file: timer_alarm_sound
-                announcement: true
+            # Stop wake word before announcement (I2S bus shared with speaker)
+            - micro_wake_word.stop:
+            # Use TTS via HA — play_on_device_media_file is broken in 2026.5.x
+            - homeassistant.service:
+                service: tts.speak
+                data:
+                  entity_id: tts.piper
+                  media_player_entity_id: media_player.waveshare_esp32_p4_wifi6_touch_lcd_7b_media_player
+                  message: "Your timer has finished"
+            # Wait for announcement to start, then finish
             - wait_until:
                 condition:
-                  not:
-                    media_player.is_announcing:
+                  media_player.is_announcing:
+                timeout: 5s
+            - wait_until:
+                condition:
+                  and:
+                    - not:
+                        media_player.is_announcing:
+                    - not:
+                        media_player.is_playing:
                 timeout: 30s
+            # Restart wake word so user can say "Alexa, stop" during delay
             - if:
                 condition:
                   lambda: "return id(timer_alarm_active);"
                 then:
+                  - micro_wake_word.start:
                   - delay: 10s
       - logger.log: "Timer alarm loop ended"
 

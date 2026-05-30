@@ -13,6 +13,7 @@ tests/
 
 # Debug logs
 debug*.txt
+*.log
 
 # Setup script (local environment specific)
 setup.sh
@@ -22,3 +23,4 @@ setup.sh
 *.swo
 *~
 *.bak
+

@@ -88,14 +88,21 @@ script:
     then:
       - script.execute: apply_theme_colors
 
-  # Safety net: hide voice overlay if the pipeline hangs (e.g. HA intent never completes).
+  # Safety net: recover if the pipeline hangs (e.g. HA intent never completes).
   # Restarted on each on_start so the timeout resets; stopped on normal on_end/on_error.
   - id: voice_overlay_timeout
     mode: restart
     then:
       - delay: 30s
-      - logger.log: "Voice overlay timeout — hiding stale overlay"
+      - logger.log: "Voice overlay timeout — hiding stale overlay and recovering"
       - lvgl.widget.hide: voice_overlay
+      - voice_assistant.stop:
+      - wait_until:
+          condition:
+            not:
+              voice_assistant.is_running:
+          timeout: 5s
+      - micro_wake_word.start:
 
 # Extend media player with embedded alarm sound file
 media_player:

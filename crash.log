@@ -1,0 +1,209 @@
+INFO ESPHome 2026.2.1
+INFO Reading configuration waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml...
+INFO Detected timezone 'America/New_York'
+INFO Starting log output from /dev/ttyACM0 with baud rate 115200
+[18:07:01.974][0;36m[D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:01.974][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:01.974][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:01.974][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:01.975][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:01.975][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:01.975][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:02.217][D][sensor:118]: 'Voice Assistant State' >> 1.0 [D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:03.242][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:05.246][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:07.219][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:07.249][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:09.256][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:11.262][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:12.221][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:13.270][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:13.891][I][safe_mode:071]: Boot seems successful; resetting boot loop counter
+[18:07:14.263][D][http_request.idf:043]: Received response header, name: content-length, value: 1306
+[18:07:14.264][D][http_request.idf:043]: Received response header, name: content-type, value: application/json
+[18:07:15.278][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:15.696][D][micro_wake_word:331]: Detected 'Alexa' with sliding average probability is 0.98 and max probability is 1.00
+[18:07:15.696][D][main:701]: Wake word detected
+[18:07:15.697][D][voice_assistant:484]: State changed from IDLE to START_MICROPHONE
+[18:07:15.698][D][voice_assistant:491]: Desired state set to START_PIPELINE
+[18:07:15.698][D][micro_wake_word:376]: Stopping wake word detection
+[18:07:15.708][D][voice_assistant:208]: Starting Microphone
+[18:07:15.708][D][ring_buffer:034]: Created ring buffer with size 16384
+[18:07:15.709][D][voice_assistant:484]: State changed from START_MICROPHONE to STARTING_MICROPHONE
+[18:07:15.710][D][micro_wake_word:384]: State changed from DETECTING_WAKE_WORD to STOPPING
+[18:07:15.717][D][voice_assistant:484]: State changed from STARTING_MICROPHONE to START_PIPELINE
+[18:07:15.728][D][voice_assistant:229]: Requesting start
+[18:07:15.730][D][voice_assistant:484]: State changed from START_PIPELINE to STARTING_PIPELINE
+[18:07:15.731][D][micro_wake_word:280]: Inference task is stopping, deallocating buffers
+[18:07:15.732][D][micro_wake_word:285]: Inference task is finished, freeing task resources
+[18:07:15.733][D][micro_wake_word:384]: State changed from STOPPING to STOPPED
+[18:07:15.749][D][voice_assistant:506]: Client started, streaming microphone
+[18:07:15.750][D][voice_assistant:484]: State changed from STARTING_PIPELINE to STREAMING_MICROPHONE
+[18:07:15.750][D][voice_assistant:491]: Desired state set to STREAMING_MICROPHONE
+[18:07:15.751][D][voice_assistant:630]: Event Type: 1
+[18:07:15.752][D][voice_assistant:633]: Assist Pipeline running
+[18:07:15.752][D][voice_assistant:630]: Event Type: 3
+[18:07:15.753][D][voice_assistant:652]: STT started
+[18:07:17.129][D][voice_assistant:630]: Event Type: 11
+[18:07:17.129][D][voice_assistant:833]: Starting STT by VAD
+[18:07:17.224][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:17.280][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:18.299][D][sensor:118]: 'CPU Temperature' >> 103.3 °F
+[18:07:18.435][D][text_sensor:113]: 'Device Name' >> 'ws-esp32p4-touch-lcd-7b'
+[18:07:19.168][D][sensor:118]: 'WiFi Signal dB' >> -65 dBm
+[18:07:19.284][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:19.565][D][voice_assistant:630]: Event Type: 12
+[18:07:19.566][D][voice_assistant:837]: STT by VAD end
+[18:07:19.567][D][voice_assistant:484]: State changed from STREAMING_MICROPHONE to STOP_MICROPHONE
+[18:07:19.567][D][voice_assistant:491]: Desired state set to AWAITING_RESPONSE
+[18:07:19.579][D][voice_assistant:484]: State changed from STOP_MICROPHONE to STOPPING_MICROPHONE
+[18:07:19.583][D][voice_assistant:484]: State changed from STOPPING_MICROPHONE to AWAITING_RESPONSE
+[18:07:21.001][D][voice_assistant:630]: Event Type: 4
+[18:07:21.002][D][voice_assistant:669]: Speech recognised as: " Set a timer for 20 minutes."
+[18:07:21.003][D][voice_assistant:630]: Event Type: 5
+[18:07:21.004][D][voice_assistant:674]: Intent started
+[18:07:21.007][D][voice_assistant:630]: Event Type: 6
+[18:07:21.007][D][voice_assistant:630]: Event Type: 7
+[18:07:21.008][D][voice_assistant:727]: Response: "Done"
+[18:07:21.009][D][voice_assistant:630]: Event Type: 8
+[18:07:21.010][D][voice_assistant:749]: Response URL: "http://192.168.1.189:8123/api/tts_proxy/-T7Ki1df8fZ30hCj4KoucQ.flac"
+[18:07:21.011][D][voice_assistant:484]: State changed from AWAITING_RESPONSE to STREAMING_RESPONSE
+[18:07:21.011][D][voice_assistant:491]: Desired state set to STREAMING_RESPONSE
+[18:07:21.012][D][voice_assistant:630]: Event Type: 2
+[18:07:21.013][D][voice_assistant:772]: Assist Pipeline ended
+[18:07:21.022][D][media_player:085]: 'Media Player' - Setting
+[18:07:21.023][D][media_player:092]:   Media URL: http://192.168.1.189:8123/api/tts_proxy/-T7Ki1df8fZ30hCj4KoucQ.flac
+[18:07:21.023][D][media_player:098]:  Announcement: yes
+[18:07:21.026][D][speaker_media_player:410]: State changed to ANNOUNCING
+[18:07:21.044][D][ring_buffer:034][ann_read]: Created ring buffer with size 1000000
+[18:07:21.046][D][speaker_media_player.pipeline:114]: Reading FLAC file type
+[18:07:21.102][D][speaker_media_player.pipeline:124]: Decoded audio has 1 channels, 48000 Hz sample rate, and 16 bits per sample
+[18:07:21.122][D][ring_buffer:034]: Created ring buffer with size 9600
+[18:07:21.134][D][speaker_mixer:464]: Starting
+[18:07:21.160][D][ring_buffer:034][speaker_task]: Created ring buffer with size 9600
+[18:07:21.161][D][i2s_audio.speaker:102]: Starting
+[18:07:21.162][D][i2s_audio.speaker:106]: Started
+[18:07:21.286][D][sensor:118]: 'Voice Assistant State' >> 0.0 
+[18:07:21.767][D][speaker_mixer:482]: Stopped
+[18:07:21.785][D][speaker_media_player:410]: State changed to IDLE
+[18:07:21.786][D][micro_wake_word:366]: Starting wake word detection
+[18:07:21.795][D][voice_assistant:352]: Announcement finished playing
+[18:07:21.796][D][voice_assistant:484]: State changed from STREAMING_RESPONSE to RESPONSE_FINISHED
+[18:07:21.797][D][voice_assistant:491]: Desired state set to RESPONSE_FINISHED
+[18:07:21.799][D][micro_wake_word:384]: State changed from STOPPED to STARTING
+[18:07:21.810][E][i2s_audio.microphone:516]: Driver failed to start; retrying in 1 second
+[18:07:21.811][E][component:451]: i2s_audio.microphone set Error flag: unspecified
+[18:07:21.904][D][ring_buffer:034][mww]: Created ring buffer with size 3840
+[18:07:21.905][D][voice_assistant:484]: State changed from RESPONSE_FINISHED to IDLE
+[18:07:21.906][D][voice_assistant:491]: Desired state set to IDLE
+[18:07:21.907][D][micro_wake_word:268]: Inference task has started, attempting to allocate memory for buffers
+[18:07:21.908][D][micro_wake_word:273]: Inference task is running
+[18:07:21.908][D][micro_wake_word:384]: State changed from STARTING to DETECTING_WAKE_WORD
+[18:07:22.206][D][i2s_audio.speaker:111]: Stopping
+[18:07:22.206][D][i2s_audio.speaker:116]: Stopped
+[18:07:22.225][D][text_sensor:113]: 'Voice Assistant Status' >> 'Idle'
+[18:07:22.814][E][component:468]: i2s_audio.microphone cleared Error flag
+[18:07:23.288][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:25.289][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:27.232][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:27.296][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:29.299][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:30.563][I][main:024]: LVGL is idle
+[18:07:30.564][D][light:079]: 'Display Backlight' Setting:
+[18:07:30.565][D][light:067]:   Brightness: 100%
+[18:07:30.566][D][light:130]:   Transition length: 0.2s
+[18:07:31.301][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:32.233][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:33.304][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:35.305][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:37.235][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:37.307][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:39.309][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:41.309][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:42.235][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:43.141][D][micro_wake_word:331]: Detected 'Alexa' with sliding average probability is 0.97 and max probability is 1.00
+[18:07:43.142][D][main:701]: Wake word detected
+[18:07:43.143][D][voice_assistant:484]: State changed from IDLE to START_MICROPHONE
+[18:07:43.143][D][voice_assistant:491]: Desired state set to START_PIPELINE
+[18:07:43.144][D][micro_wake_word:376]: Stopping wake word detection
+[18:07:43.156][D][voice_assistant:208]: Starting Microphone
+[18:07:43.157][D][ring_buffer:034]: Created ring buffer with size 16384
+[18:07:43.158][D][voice_assistant:484]: State changed from START_MICROPHONE to STARTING_MICROPHONE
+[18:07:43.159][D][micro_wake_word:384]: State changed from DETECTING_WAKE_WORD to STOPPING
+[18:07:43.163][D][voice_assistant:484]: State changed from STARTING_MICROPHONE to START_PIPELINE
+[18:07:43.177][D][voice_assistant:229]: Requesting start
+[18:07:43.179][D][voice_assistant:484]: State changed from START_PIPELINE to STARTING_PIPELINE
+[18:07:43.180][D][micro_wake_word:280]: Inference task is stopping, deallocating buffers
+[18:07:43.181][D][micro_wake_word:285]: Inference task is finished, freeing task resources
+[18:07:43.182][D][micro_wake_word:384]: State changed from STOPPING to STOPPED
+[18:07:43.186][D][voice_assistant:506]: Client started, streaming microphone
+[18:07:43.187][D][voice_assistant:484]: State changed from STARTING_PIPELINE to STREAMING_MICROPHONE
+[18:07:43.187][D][voice_assistant:491]: Desired state set to STREAMING_MICROPHONE
+[18:07:43.188][D][voice_assistant:630]: Event Type: 1
+[18:07:43.189][D][voice_assistant:633]: Assist Pipeline running
+[18:07:43.189][D][voice_assistant:630]: Event Type: 3
+[18:07:43.190][D][voice_assistant:652]: STT started
+[18:07:43.309][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:44.265][D][voice_assistant:630]: Event Type: 11
+[18:07:44.266][D][voice_assistant:833]: Starting STT by VAD
+[18:07:44.306][D][http_request.idf:043]: Received response header, name: content-length, value: 1306
+[18:07:44.307][D][http_request.idf:043]: Received response header, name: content-type, value: application/json
+[18:07:45.313][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:46.106][D][voice_assistant:630]: Event Type: 12
+[18:07:46.107][D][voice_assistant:837]: STT by VAD end
+[18:07:46.108][D][voice_assistant:484]: State changed from STREAMING_MICROPHONE to STOP_MICROPHONE
+[18:07:46.108][D][voice_assistant:491]: Desired state set to AWAITING_RESPONSE
+[18:07:46.122][D][voice_assistant:484]: State changed from STOP_MICROPHONE to STOPPING_MICROPHONE
+[18:07:46.127][D][voice_assistant:484]: State changed from STOPPING_MICROPHONE to AWAITING_RESPONSE
+[18:07:47.236][D][text_sensor:113]: 'Voice Assistant Status' >> 'Idle'
+[18:07:47.314][D][sensor:118]: 'Voice Assistant State' >> 0.0 
+[18:07:47.336][D][voice_assistant:630]: Event Type: 4
+[18:07:47.337][D][voice_assistant:669]: Speech recognised as: " List timers."
+[18:07:47.337][D][voice_assistant:630]: Event Type: 5
+[18:07:47.338][D][voice_assistant:674]: Intent started
+[18:07:47.364][D][voice_assistant:630]: Event Type: 6
+[18:07:47.365][D][voice_assistant:630]: Event Type: 7
+[18:07:47.366][D][voice_assistant:727]: Response: "Sorry, I couldn't understand that"
+[18:07:47.366][D][voice_assistant:630]: Event Type: 8
+[18:07:47.367][D][voice_assistant:749]: Response URL: "http://192.168.1.189:8123/api/tts_proxy/HTkzRiGAnF_SiHog2QddGA.flac"
+[18:07:47.368][D][voice_assistant:484]: State changed from AWAITING_RESPONSE to STREAMING_RESPONSE
+[18:07:47.369][D][voice_assistant:491]: Desired state set to STREAMING_RESPONSE
+[18:07:47.370][D][voice_assistant:630]: Event Type: 2
+[18:07:47.370][D][voice_assistant:772]: Assist Pipeline ended
+[18:07:47.371][D][media_player:085]: 'Media Player' - Setting
+[18:07:47.372][D][media_player:092]:   Media URL: http://192.168.1.189:8123/api/tts_proxy/HTkzRiGAnF_SiHog2QddGA.flac
+[18:07:47.373][D][media_player:098]:  Announcement: yes
+[18:07:47.374][D][speaker_media_player:410]: State changed to ANNOUNCING
+[18:07:47.389][D][ring_buffer:034][ann_read]: Created ring buffer with size 1000000
+[18:07:47.391][D][speaker_media_player.pipeline:114]: Reading FLAC file type
+[18:07:47.449][D][speaker_media_player.pipeline:124]: Decoded audio has 1 channels, 48000 Hz sample rate, and 16 bits per sample
+[18:07:47.451][D][ring_buffer:034]: Created ring buffer with size 9600
+[18:07:47.462][D][speaker_mixer:464]: Starting
+[18:07:47.489][D][ring_buffer:034][speaker_task]: Created ring buffer with size 9600
+[18:07:47.490][D][i2s_audio.speaker:102]: Starting
+[18:07:47.491][D][i2s_audio.speaker:106]: Started
+[18:07:49.316][D][sensor:118]: 'Voice Assistant State' >> 0.0 
+[18:07:49.690][D][speaker_mixer:482]: Stopped
+[18:07:49.708][D][speaker_media_player:410]: State changed to IDLE
+[18:07:49.709][D][micro_wake_word:366]: Starting wake word detection
+[18:07:49.714][D][voice_assistant:352]: Announcement finished playing
+[18:07:49.715][D][voice_assistant:484]: State changed from STREAMING_RESPONSE to RESPONSE_FINISHED
+[18:07:49.715][D][voice_assistant:491]: Desired state set to RESPONSE_FINISHED
+[18:07:49.717][D][micro_wake_word:384]: State changed from STOPPED to STARTING
+[18:07:49.729][E][i2s_audio.microphone:516]: Driver failed to start; retrying in 1 second
+[18:07:49.730][E][component:451]: i2s_audio.microphone set Error flag: unspecified
+[18:07:49.823][D][ring_buffer:034][mww]: Created ring buffer with size 3840
+[18:07:49.824][D][voice_assistant:484]: State changed from RESPONSE_FINISHED to IDLE
+[18:07:49.825][D][voice_assistant:491]: Desired state set to IDLE
+[18:07:49.826][D][micro_wake_word:268]: Inference task has started, attempting to allocate memory for buffers
+[18:07:49.827][D][micro_wake_word:273]: Inference task is running
+[18:07:49.827][D][micro_wake_word:384]: State changed from STARTING to DETECTING_WAKE_WORD
+[18:07:50.073][D][i2s_audio.speaker:111]: Stopping
+[18:07:50.073][D][i2s_audio.speaker:116]: Stopped
+[18:07:50.734][E][component:468]: i2s_audio.microphone cleared Error flag
+[18:07:51.319][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:52.238][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:53.321][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:55.322][D][sensor:118]: 'Voice Assistant State' >> 1.0 
+[18:07:57.248][D][text_sensor:113]: 'Voice Assistant Status' >> 'Listening'
+[18:07:57.324][D][sensor:118]: 'Voice Assistant State' >> 1.0 

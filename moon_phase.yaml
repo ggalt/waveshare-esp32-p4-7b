@@ -1,0 +1,62 @@
+---
+# Moon phase display for clock page
+# Subscribes to sensor.moon_phase from Home Assistant and updates the moon image.
+# Uses 100x100 RGBA PNG images from pages/images/Moon/100/ (R=G=B=luminance).
+# True grayscale in RGBA avoids the green-tint artefact that RGB565 causes on
+# photographic images with unequal R/G/B channel values.
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: sensor.moon_phase
+    id: moon_phase_state
+    on_value:
+      then:
+        - lambda: |-
+            std::string phase = id(moon_phase_state).state;
+            ESP_LOGI("moon", "Moon phase updated: '%s'", phase.c_str());
+            if (phase == "new_moon") lv_img_set_src(id(moon_phase_icon), id(moon_new_moon));
+            else if (phase == "waxing_crescent") lv_img_set_src(id(moon_phase_icon), id(moon_waxing_crescent));
+            else if (phase == "first_quarter") lv_img_set_src(id(moon_phase_icon), id(moon_first_quarter));
+            else if (phase == "waxing_gibbous") lv_img_set_src(id(moon_phase_icon), id(moon_waxing_gibbous));
+            else if (phase == "full_moon") lv_img_set_src(id(moon_phase_icon), id(moon_full_moon));
+            else if (phase == "waning_gibbous") lv_img_set_src(id(moon_phase_icon), id(moon_waning_gibbous));
+            else if (phase == "last_quarter") lv_img_set_src(id(moon_phase_icon), id(moon_last_quarter));
+            else if (phase == "waning_crescent") lv_img_set_src(id(moon_phase_icon), id(moon_waning_crescent));
+            else lv_img_set_src(id(moon_phase_icon), id(moon_new_moon));
+
+image:
+  defaults:
+    byte_order: little_endian
+  rgb565:
+    alpha_channel:
+      - file: pages/images/Moon/100/new_moon.png
+        id: moon_new_moon
+        resize: 100x100
+
+      - file: pages/images/Moon/100/waxing_crescent.png
+        id: moon_waxing_crescent
+        resize: 100x100
+
+      - file: pages/images/Moon/100/first_quarter.png
+        id: moon_first_quarter
+        resize: 100x100
+
+      - file: pages/images/Moon/100/waxing_gibbous.png
+        id: moon_waxing_gibbous
+        resize: 100x100
+
+      - file: pages/images/Moon/100/full_moon.png
+        id: moon_full_moon
+        resize: 100x100
+
+      - file: pages/images/Moon/100/waning_gibbous.png
+        id: moon_waning_gibbous
+        resize: 100x100
+
+      - file: pages/images/Moon/100/last_quarter.png
+        id: moon_last_quarter
+        resize: 100x100
+
+      - file: pages/images/Moon/100/waning_crescent.png
+        id: moon_waning_crescent
+        resize: 100x100

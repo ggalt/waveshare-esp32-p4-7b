@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an ESPHome development workspace for building touchscreen control panels that connect to Home Assistant. It contains:
 
-- **Standalone YAML configs** (root level) -- device-specific configurations being actively developed
+- **Standalone YAML configs** (root level and in the 'pages' subdirectory) -- device-specific configurations being actively developed
 - **`esphome-modular-lvgl-buttons/`** -- a cloned library (git repo: `agillis/esphome-modular-lvgl-buttons`) providing modular, reusable LVGL UI components for ESP32 touchscreen devices. This is a **separate git repository** -- changes here should be intentional and considered for upstream contribution.
 - **`tests/`** -- test and experimental configuration files
 - **`secrets.yaml`** -- WiFi credentials and location data (gitignored, never commit)
@@ -105,6 +105,48 @@ The Waveshare ESP32-P4 boards (the primary hardware being developed for) have un
 ### Audio Pipeline (P4 7B board)
 
 The hardware file sets up a multi-stage audio pipeline: `ES8311 DAC` + `ES7210 ADC` over I2C, with I2S bus for speaker/microphone data. The speaker chain is: `i2s_audio speaker` → `mixer` (announcement + media inputs) → `resampler` stages. A GPIO switch (`GPIO53`) controls the hardware amplifier. The `media_player-voice_assistant.yaml` package builds on these hardware primitives for voice assistant and media playback.
+
+## Image Encoding for LVGL Displays
+
+The LVGL display runs at **`color_depth: 16`** (RGB565) with **`byte_order: little_endian`**. This affects how images must be declared in ESPHome:
+
+### Critical: byte_order must match LVGL
+
+**ESPHome's image encoder defaults to big-endian**, but this LVGL display is configured for **little-endian**. If `byte_order` is not explicitly set on `image:` declarations, the pixel data will be byte-swapped, causing severe green/magenta color corruption.
+
+**Always set `byte_order: little_endian`** on image declarations using `defaults:`:
+```yaml
+image:
+  defaults:
+    byte_order: little_endian
+  rgb565:
+    alpha_channel:
+      - file: path/to/image.png
+        id: my_image
+        resize: 100x100
+```
+
+This applies to all `image:` blocks in any package file. SVG icons with flat colors may appear to work without it (the corruption is less visible on saturated colors), but photographic images will be severely corrupted.
+
+### Image type guidelines
+
+- **SVG icons and graphics:** Use `rgb565:` with `alpha_channel:` transparency.
+
+- **Photographic or near-grayscale images (e.g., moon phases):** Use `rgb565:` with `alpha_channel:`, but **pre-convert the source to true grayscale** (R=G=B=luminance) in the RGBA PNG. This avoids the subtle green tint that RGB565's unequal 5-6-5 bit depth causes on warm-toned photos.
+  - **Do NOT use `grayscale:` type** -- LVGL on this device does not render GRAYSCALE images (they appear invisible).
+  - See `pages/images/Moon/generate_phases.py` for the conversion pattern.
+
+- **Online/dynamic JPEG images (e.g., album art):** Use the `online_image:` component with `type: RGB565` and `byte_order: little_endian`.
+  ```yaml
+  online_image:
+    - url: "http://server/image.jpg"
+      id: my_image
+      format: JPEG
+      type: RGB565
+      byte_order: little_endian
+      resize: 200x200
+      update_interval: never
+  ```
 
 ## Desktop Testing with SDL
 

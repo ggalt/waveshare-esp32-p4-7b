@@ -88,6 +88,15 @@ script:
     then:
       - script.execute: apply_theme_colors
 
+  # Safety net: hide voice overlay if the pipeline hangs (e.g. HA intent never completes).
+  # Restarted on each on_start so the timeout resets; stopped on normal on_end/on_error.
+  - id: voice_overlay_timeout
+    mode: restart
+    then:
+      - delay: 30s
+      - logger.log: "Voice overlay timeout — hiding stale overlay"
+      - lvgl.widget.hide: voice_overlay
+
 # Extend media player with embedded alarm sound file
 media_player:
   - id: !extend my_media_player
@@ -112,13 +121,16 @@ voice_assistant:
               id: voice_overlay
               border_color: light_blue
           - lvgl.widget.show: voice_overlay
+          - script.execute: voice_overlay_timeout
   on_listening:
     - lvgl.obj.update:
         id: voice_overlay
         border_color: ep_green
   on_end:
+    - script.stop: voice_overlay_timeout
     - lvgl.widget.hide: voice_overlay
   on_error:
+    - script.stop: voice_overlay_timeout
     - lvgl.widget.hide: voice_overlay
 
 # Sun triggers for clock color changes (merges with sun: from backlight_time.yaml)
@@ -156,6 +168,8 @@ packages:
   loading_screen: !include esphome-modular-lvgl-buttons/pages/loading_480px.yaml
   # Weather condition icon + temperature from Home Assistant
   weather: !include weather_clock.yaml
+  # Moon phase icon from Home Assistant
+  moon_phase: !include moon_phase.yaml
   # Weather detail page data (sensors, forecast, 80px icons)
   weather_detail: !include weather_detail.yaml
   # Clock font sizes (small/medium/large) - set clock_size in secrets.yaml

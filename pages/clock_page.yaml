@@ -32,6 +32,12 @@ lvgl:
             x: 20
             y: 20
             src: unknown_100
+        # Moon phase - top center
+        - image:
+            id: moon_phase_icon
+            align: TOP_MID
+            y: 20
+            src: moon_full_moon
         # Temperature - top right corner
         - label:
             id: weather_temperature_label

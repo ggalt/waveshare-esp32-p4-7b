@@ -104,6 +104,57 @@ script:
           timeout: 5s
       - micro_wake_word.start:
 
+  # Safety net for TTS playback: the package's on_end has an unbounded
+  # wait_until(not announcing) that blocks forever if the speaker crashes and
+  # leaves the media player stuck in ANNOUNCING state.  This watchdog runs as
+  # a separate coroutine and ensures the wake word listener is restarted.
+  # Also handles voice_assistant stuck in STREAMING_RESPONSE (is_running true)
+  # due to the same speaker crash — see ESPHome issue #16755.
+  - id: voice_playback_watchdog
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            and:
+              - not:
+                  media_player.is_announcing:
+              - not:
+                  media_player.is_playing:
+          timeout: 45s
+      - delay: 1s
+      # If the timeout expired with media player still stuck, or if
+      # voice_assistant is still in STREAMING_RESPONSE, force a clean stop
+      # so we can restart the wake word listener.
+      - if:
+          condition:
+            or:
+              - media_player.is_announcing:
+              - voice_assistant.is_running:
+          then:
+            - logger.log: "Playback watchdog — forcing recovery from stuck state"
+            - voice_assistant.stop:
+            - wait_until:
+                condition:
+                  not:
+                    voice_assistant.is_running:
+                timeout: 5s
+      - if:
+          condition:
+            not:
+              micro_wake_word.is_running:
+          then:
+            - logger.log: "Playback watchdog — restarting wake word detection"
+            - micro_wake_word.start:
+
+# Increase I2S speaker buffer from the hardware package's 100 ms to the new
+# default of 500 ms.  The legacy I2S driver was removed in 2026.4.0 and the
+# new driver needs a larger buffer to absorb task-scheduling jitter (the
+# touchscreen alone can block the loop for >1 s).  100 ms caused repeated
+# "Event/record queues desynced" restarts on long TTS announcements.
+speaker:
+  - id: !extend my_speaker
+    buffer_duration: 500ms
+
 # Extend media player with embedded alarm sound file
 media_player:
   - id: !extend my_media_player
@@ -115,6 +166,7 @@ media_player:
 # Uses a top_layer overlay so it doesn't conflict with page_style or page content
 voice_assistant:
   on_start:
+    - script.stop: voice_playback_watchdog
     - if:
         condition:
           lambda: "return id(timer_alarm_active);"
@@ -133,11 +185,24 @@ voice_assistant:
     - lvgl.obj.update:
         id: voice_overlay
         border_color: ep_green
+  on_tts_end:
+    # Stop the safety-net timeout as soon as we receive a TTS response URL.
+    # This must happen here rather than in on_end because the package's on_end
+    # blocks on wait_until(announcement finished) BEFORE the main config's
+    # on_end actions run (ESPHome merge order: package first, main config appended).
+    # Without this, a long TTS playback exceeds the 30 s timeout and gets killed.
+    - script.stop: voice_overlay_timeout
+    - lvgl.widget.hide: voice_overlay
+    # Start a watchdog that ensures wake word restarts after playback finishes
+    # (or times out).  This runs independently of the package's on_end chain,
+    # which can block forever if the media player gets stuck in ANNOUNCING state.
+    - script.execute: voice_playback_watchdog
   on_end:
     - script.stop: voice_overlay_timeout
     - lvgl.widget.hide: voice_overlay
   on_error:
     - script.stop: voice_overlay_timeout
+    - script.stop: voice_playback_watchdog
     - lvgl.widget.hide: voice_overlay
 
 # Sun triggers for clock color changes (merges with sun: from backlight_time.yaml)

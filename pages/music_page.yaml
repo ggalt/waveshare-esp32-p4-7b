@@ -7,7 +7,11 @@ lvgl:
       styles: page_style
       <<: !include ../esphome-modular-lvgl-buttons/widgets/swipe_navigation.yaml
       on_load:
-        - lambda: 'id(lms_music_page_active) = true;'
+        - lambda: |-
+            id(lms_music_page_active) = true;
+            auto call = id(display_page).make_call();
+            call.set_option("Music");
+            call.perform();
         - script.execute: lms_update_overlay
         - script.execute: lms_force_poll
       on_unload:

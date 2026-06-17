@@ -33,7 +33,7 @@ esphome logs <file>.yaml
 esphome clean <file>.yaml
 ```
 
-All commands run from `/home/esp32Dev/espHomeProjects/`. ESPHome is installed in a virtualenv at `/home/esp32Dev/esphome-venv/`. The installed version is 2026.2.1.
+All commands run from `/home/esp32Dev/espHomeProjects/`. ESPHome is installed in a virtualenv at `/home/esp32Dev/esphome-venv/`. The installed version is 2026.5.3.
 
 **Validation workflow:** Always run `esphome config <file>.yaml` before `esphome run` to catch YAML errors quickly. The `config` command outputs the fully merged/resolved configuration, making it useful for debugging package composition issues.
 

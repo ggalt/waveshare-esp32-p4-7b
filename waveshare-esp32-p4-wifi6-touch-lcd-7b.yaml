@@ -62,6 +62,15 @@ logger:
     lvgl: info
   hardware_uart: USB_SERIAL_JTAG
 
+# LMS volume ducking — lower external music player while voice assistant is active
+globals:
+  - id: lms_volume_pre_duck
+    type: int
+    initial_value: '0'
+  - id: lms_is_ducked
+    type: bool
+    initial_value: 'false'
+
 # Time update script - called by backlight_time.yaml on sync and every minute
 script:
   - id: time_update
@@ -88,6 +97,40 @@ script:
     then:
       - script.execute: apply_theme_colors
 
+  # Duck LMS music player volume when voice assistant activates
+  - id: lms_duck_volume
+    then:
+      - if:
+          condition:
+            lambda: 'return !id(lms_is_ducked);'
+          then:
+            - lambda: |-
+                id(lms_volume_pre_duck) = id(lms_volume);
+                id(lms_is_ducked) = true;
+            - script.execute:
+                id: lms_set_volume
+                volume_level: 10
+
+  # Restore LMS music player volume after voice assistant finishes.
+  # If a voice command changed the volume during the interaction (e.g.
+  # "set volume to 50"), the 3-second LMS poll will have updated
+  # lms_volume to the new value.  Only restore the pre-duck volume if
+  # the current volume is still near the duck level (10).
+  - id: lms_unduck_volume
+    then:
+      - if:
+          condition:
+            lambda: 'return id(lms_is_ducked);'
+          then:
+            - lambda: 'id(lms_is_ducked) = false;'
+            - if:
+                condition:
+                  lambda: 'return id(lms_volume) <= 12;'
+                then:
+                  - script.execute:
+                      id: lms_set_volume
+                      volume_level: !lambda 'return id(lms_volume_pre_duck);'
+
   # Safety net: recover if the pipeline hangs (e.g. HA intent never completes).
   # Restarted on each on_start so the timeout resets; stopped on normal on_end/on_error.
   - id: voice_overlay_timeout
@@ -102,6 +145,7 @@ script:
             not:
               voice_assistant.is_running:
           timeout: 5s
+      - script.execute: lms_unduck_volume
       - micro_wake_word.start:
 
   # Safety net for TTS playback: the package's on_end has an unbounded
@@ -113,6 +157,15 @@ script:
   - id: voice_playback_watchdog
     mode: restart
     then:
+      # Wait for the media player to actually start announcing before we
+      # monitor for completion.  on_tts_end fires before the media player
+      # transitions to ANNOUNCING (~90 ms gap), so without this initial
+      # wait the "not announcing" check below is immediately true.
+      - wait_until:
+          condition:
+            media_player.is_announcing:
+          timeout: 5s
+      # Now wait for playback to finish.
       - wait_until:
           condition:
             and:
@@ -138,6 +191,8 @@ script:
                   not:
                     voice_assistant.is_running:
                 timeout: 5s
+      # Restore LMS volume (safety net in case on_end didn't run)
+      - script.execute: lms_unduck_volume
       - if:
           condition:
             not:
@@ -167,6 +222,7 @@ media_player:
 voice_assistant:
   on_start:
     - script.stop: voice_playback_watchdog
+    - script.execute: lms_duck_volume
     - if:
         condition:
           lambda: "return id(timer_alarm_active);"
@@ -200,10 +256,14 @@ voice_assistant:
   on_end:
     - script.stop: voice_overlay_timeout
     - lvgl.widget.hide: voice_overlay
+    # Restore LMS volume — runs after the package's on_end finishes waiting
+    # for the announcement to complete, so TTS plays at ducked volume.
+    - script.execute: lms_unduck_volume
   on_error:
     - script.stop: voice_overlay_timeout
     - script.stop: voice_playback_watchdog
     - lvgl.widget.hide: voice_overlay
+    - script.execute: lms_unduck_volume
 
 # Sun triggers for clock color changes (merges with sun: from backlight_time.yaml)
 sun:
@@ -272,6 +332,35 @@ lvgl:
           border_opa: COVER
           clickable: false
           scrollable: false
+
+select:
+  - platform: template
+    name: "Display Page"
+    id: display_page
+    icon: mdi:book-open-page-variant
+    optimistic: true
+    options:
+      - Clock
+      - Weather
+      - Music
+    initial_option: Clock
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(display_page).active_index() == 0;'
+            then:
+              - lvgl.page.show: main_page
+        - if:
+            condition:
+              lambda: 'return id(display_page).active_index() == 1;'
+            then:
+              - lvgl.page.show: weather_page
+        - if:
+            condition:
+              lambda: 'return id(display_page).active_index() == 2;'
+            then:
+              - lvgl.page.show: music_page
 
 text_sensor:
   - platform: template

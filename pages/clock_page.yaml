@@ -24,6 +24,11 @@ lvgl:
     - id: main_page
       styles: page_style
       <<: !include ../esphome-modular-lvgl-buttons/widgets/swipe_navigation.yaml
+      on_load:
+        - lambda: |-
+            auto call = id(display_page).make_call();
+            call.set_option("Clock");
+            call.perform();
       widgets:
         # Weather icon - top left corner
         - image:

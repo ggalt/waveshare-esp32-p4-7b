@@ -23,6 +23,7 @@ font:
       $mdi_music,
       $mdi_server_off,
       $mdi_lan_disconnect,
+      $mdi_close,
     ]
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: mdi_music_80

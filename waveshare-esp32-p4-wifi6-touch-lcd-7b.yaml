@@ -314,6 +314,9 @@ packages:
   clock_page: !include pages/clock_page.yaml
   weather_page: !include pages/weather_page.yaml
   music_page: !include pages/music_page.yaml
+  # Album search popup overlay on music page
+  album_search_overlay: !include pages/album_search_overlay.yaml
+  album_search: !include album_search.yaml
   # Timers
   timers: !include timers.yaml
 

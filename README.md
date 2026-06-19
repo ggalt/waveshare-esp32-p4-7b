@@ -2,7 +2,7 @@
 
 This is a set of files to set up the [Waveshare ESP32-P4-WIFI6-7inch-Touch-LCD(B)](https://www.waveshare.com/esp32-p4-wifi6-touch-lcd-7b.htm) as a Voice Assistant in [Home Assistant](https://www.home-assistant.io/).  
 
-This is a personal project, set up for the way I work and it may not work for you, but may give you ideas about how to create your own Voice Assistant.  The device is set up with 3 pages: a clock, a weather page and a page that displays and allows you to control an associated Lyrion Music Player (I've used a piCorePlayer).  The device has a few limitations, such as sharing the same bus for the mic and speaker, which means it can't play music AND listen for your commands (which is why I used the associated player approach).
+This is a personal project, set up for the way I work and it may not work for you, but may give you ideas about how to create your own Voice Assistant.  The device is set up with 3 pages: a clock, a weather page and a page that displays and allows you to control an associated Lyrion Music Player (I've used a piCorePlayer).  The Waveshare device has a few limitations, such as sharing the same bus for the mic and speaker, which means it can't play music AND listen for your commands (which is why I used the associated player approach).
 
 The player requires a 'secrets.yaml' file in the main directory in the form of:
 
@@ -26,4 +26,20 @@ player_entity: "[media_player.picoreplayer]"   # entity name for associated play
 lms_server: "[http://192.168.XXX.XXX:9000]"
 ```
 
+I have included the voice commands that I use in conjunction with this device.  You may not which to used them, but they should give you a starting point for setting up similar commands.
+
+The voice commands and player need a few HA helpers.  There are 4 that are used:
+
+| Name | Entity ID | Type | Size | 
+| --- | --- | --- | --- |
+| Album Search Trigger | input_text.album_search_trigger | input text | 255 |
+| last_album_search_ids | input_text.last_album_search_ids | input text | 255 |
+| last_music_search_artist | input_text.last_music_search_artist | input text | 255 |
+| lms_server_ip | input_text.lms_server_ip | input text | 100 |
+
+All should be exposed to the voice assistants.
+
+
 The STL files will allow you to print a stand for the screen and place the accompanying speaker somewhere that it can provide feedback.  The faceplace uses two M3 threaded inserts, and the speaker holder uses four M2.5 threaded inserts.  I also used a 90° USB-C adapter to turn the USB-C power outlet of the board so that it is pointing backward.  [This USB-C adapter](https://www.amazon.com/dp/B0BDY2ZBRP) is the one I used, but others might work.
+
+[Here is a link to a video of the device in action.](https://youtu.be/p0bto6TRb30)

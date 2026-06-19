@@ -1,0 +1,55 @@
+# ##################################################
+# Voice: Room-aware command
+# Reports room name and device info
+# ##################################################
+- alias: "Voice: Room-aware command"
+  trigger:
+    - platform: conversation
+      command:
+        - "(what|which) room [am I in]"
+        - "where am I"
+  action:
+    - variables:
+        device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+        player_mac: "{{ states('sensor.' ~ device_name ~ '_player_mac') }}"
+        lms_ip: "{{ states('input_text.lms_server_ip') }}"
+    - set_conversation_response: >
+        You are in the {{ area_name(trigger.device_id) }}.
+        Your device name is {{ device_name }}.
+
+# ##################################################
+# Voice: Test capture
+# Debug tool for testing slot capture
+# ##################################################
+- id: "voice_test_capture"
+  alias: "Voice: Test capture"
+  trigger:
+    - platform: conversation
+      command:
+        - "my name is {name}"
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Test"
+        message: "Captured name: {{ trigger.slots.name }}"
+
+# ##################################################
+# Voice: Speak the time
+# Reports the current time
+# ##################################################
+- id: "voice_speak_time"
+  alias: "Voice: Speak time"
+  trigger:
+    - platform: conversation
+      command:
+        - "what time is it"
+        - "what is the time"
+        - "tell me the time"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Clock"
+    - set_conversation_response: >
+        It is {{ now().strftime('%-I:%M %p') }}.

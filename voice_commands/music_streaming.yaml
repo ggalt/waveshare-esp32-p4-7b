@@ -1,0 +1,142 @@
+# ##################################################
+# Voice: Play radio
+# Plays radio station from LMS favorites
+# ##################################################
+- id: "voice_play_radio"
+  alias: "Voice: Play radio"
+  trigger:
+    - platform: conversation
+      command:
+        - "play {station} radio"
+        - "tune in to {station}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: favorites
+        parameters:
+          - items
+          - "0"
+          - "1"
+          - "search:{{ trigger.slots.station | trim }}"
+          - "tags:u"
+    - if:
+        - condition: template
+          value_template: "{{ state_attr(player_entity, 'query_result')['count'] | int > 0 }}"
+      then:
+        - variables:
+            station_id: "{{ state_attr(player_entity, 'query_result')['loop_loop'][0]['id'] }}"
+            station_name: "{{ state_attr(player_entity, 'query_result')['loop_loop'][0]['name'] }}"
+        - service: squeezebox.call_method
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: favorites
+            parameters:
+              - playlist
+              - play
+              - "item_id:{{ station_id }}"
+        - set_conversation_response: "Playing {{ station_name }}"
+      else:
+        - set_conversation_response: "Sorry, I couldn't find {{ trigger.slots.station }} in your favourites. Please add it to LMS first."
+
+# ##################################################
+# Voice: Play Pandora
+# Plays Pandora station via Pyrrha plugin
+# ##################################################
+- id: "voice_play_pandora"
+  alias: "Voice: Play Pandora"
+  trigger:
+    - platform: conversation
+      command:
+        - "play {station} from Pandora"
+        - "play {station} radio from Pandora"
+        - "play Pandora {station}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: pyrrha
+        parameters:
+          - items
+          - "0"
+          - "250"
+    - variables:
+        station_id: >
+          {{ state_attr(player_entity, 'query_result')['loop_loop']
+             | selectattr('name', 'search', '(?i)' ~ trigger.slots.station | trim)
+             | map(attribute='id')
+             | first | default('') }}
+        station_name: >
+          {{ state_attr(player_entity, 'query_result')['loop_loop']
+             | selectattr('name', 'search', '(?i)' ~ trigger.slots.station | trim)
+             | map(attribute='name')
+             | first | default('') }}
+    - if:
+        - condition: template
+          value_template: "{{ station_name != '' }}"
+      then:
+        - service: squeezebox.call_method
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: pyrrha
+            parameters:
+              - playlist
+              - play
+              - "item_id:{{ station_id }}"
+        - set_conversation_response: "Playing {{ station_name }} on Pandora"
+      else:
+        - set_conversation_response: "Sorry, I couldn't find {{ trigger.slots.station }} on Pandora"
+
+# ##################################################
+# Voice: Streaming test
+# Debug tool for streaming service queries
+# ##################################################
+- id: "voice_streaming_test"
+  alias: "Voice: Streaming test"
+  trigger:
+    - platform: conversation
+      command:
+        - "test streaming {service}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: "{{ trigger.slots.service | lower }}"
+        parameters:
+          - items
+          - "0"
+          - "10"
+    - service: persistent_notification.create
+      data:
+        title: "Streaming Query Result"
+        message: "{{ state_attr(player_entity, 'query_result') }}"
+    - set_conversation_response: "Check the notification"

@@ -1,0 +1,235 @@
+# ##################################################
+# Voice: Music skip
+# Skips to next track
+# ##################################################
+- id: "voice_music_skip"
+  alias: "Voice: Music skip"
+  trigger:
+    - platform: conversation
+      command:
+        - "skip [the] [current] [track]"
+        - "next [track] [please]"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: media_player.media_next_track
+      target:
+        entity_id: "{{ player_entity }}"
+    - set_conversation_response: "Skipping to next track"
+
+# ##################################################
+# Voice: Music pause
+# Pauses music playback
+# ##################################################
+- id: "voice_music_pause"
+  alias: "Voice: Music pause"
+  trigger:
+    - platform: conversation
+      command:
+        - "pause [the] [music]"
+        - "pause [please]"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: media_player.media_pause
+      target:
+        entity_id: "{{ player_entity }}"
+    - set_conversation_response: "Pausing"
+
+# ##################################################
+# Voice: Music stop
+# Stops music playback
+# ##################################################
+- id: "voice_music_stop"
+  alias: "Voice: Music stop"
+  trigger:
+    - platform: conversation
+      command:
+        - "stop [the] [music]"
+        - "stop [please]"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: media_player.media_stop
+      target:
+        entity_id: "{{ player_entity }}"
+    - set_conversation_response: "Stopping"
+
+# ##################################################
+# Voice: Music play
+# Resumes music playback
+# ##################################################
+- id: "voice_music_play"
+  alias: "Voice: Music play"
+  trigger:
+    - platform: conversation
+      command:
+        - "play [please]"
+        - "resume [the] [music]"
+        - "continue [the] [music]"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: media_player.media_play
+      target:
+        entity_id: "{{ player_entity }}"
+    - set_conversation_response: "Resuming"
+
+# ##################################################
+# Voice: Volume up
+# Increases the player volume by 5
+# ##################################################
+- id: "voice_volume_up"
+  alias: "Voice: Volume up"
+  trigger:
+    - platform: conversation
+      command:
+        - "volume up"
+        - "turn [the] volume up"
+        - "turn it up"
+        - "louder"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_method
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: mixer
+        parameters:
+          - volume
+          - "+5"
+    - set_conversation_response: "Volume increased"
+
+# ##################################################
+# Voice: Volume down
+# Decreases the player volume by 5
+# ##################################################
+- id: "voice_volume_down"
+  alias: "Voice: Volume down"
+  trigger:
+    - platform: conversation
+      command:
+        - "volume down"
+        - "turn [the] volume down"
+        - "turn it down"
+        - "quieter"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_method
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: mixer
+        parameters:
+          - volume
+          - "-5"
+    - set_conversation_response: "Volume decreased"
+
+# ##################################################
+# Voice: Set volume
+# Sets the player volume to a specific level (0-100)
+# ##################################################
+- id: "voice_set_volume"
+  alias: "Voice: Set volume"
+  trigger:
+    - platform: conversation
+      command:
+        - "set [the] volume to {volume}"
+        - "set [the] volume [to] {volume} percent"
+        - "change [the] volume to {volume}"
+        - "change [the] volume to {volume} percent"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+    volume_level: "{{ trigger.slots.volume | int(0) }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - if:
+        - condition: template
+          value_template: "{{ volume_level >= 0 and volume_level <= 100 }}"
+      then:
+        - service: squeezebox.call_method
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: mixer
+            parameters:
+              - volume
+              - "{{ volume_level }}"
+        - set_conversation_response: "Volume set to {{ volume_level }} percent"
+      else:
+        - set_conversation_response: "Sorry, volume must be between 0 and 100"
+
+# ##################################################
+# Voice: Mute toggle
+# Mutes or unmutes the player
+# ##################################################
+- id: "voice_mute_toggle"
+  alias: "Voice: Mute toggle"
+  trigger:
+    - platform: conversation
+      command:
+        - "mute [the] [music]"
+        - "unmute [the] [music]"
+        - "toggle mute"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+    is_muted: "{{ state_attr(player_entity, 'is_volume_muted') }}"
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Music"
+    - service: squeezebox.call_method
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: mixer
+        parameters:
+          - muting
+    - set_conversation_response: >
+        {% if is_muted %}Unmuted{% else %}Muted{% endif %}

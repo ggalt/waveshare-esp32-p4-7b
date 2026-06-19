@@ -156,6 +156,10 @@ script:
           // --- Music page: art container ---
           lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
 
+          // --- Album search popup ---
+          lv_obj_set_style_bg_color(id(album_search_card), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(album_search_title_bar), lv_color_make(0x25, 0x25, 0x25), LV_PART_MAIN);
+
           // --- Weather page: tabview ---
           lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
           lv_obj_set_style_bg_color(tab_btns, tab_bg, LV_PART_MAIN);
@@ -298,6 +302,10 @@ script:
           // --- Music page: art container ---
           lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
 
+          // --- Album search popup ---
+          lv_obj_set_style_bg_color(id(album_search_card), lv_color_make(0xFA, 0xFA, 0xFA), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(album_search_title_bar), lv_color_make(0xEE, 0xEE, 0xEE), LV_PART_MAIN);
+
           // --- Weather page: tabview ---
           lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));
           lv_obj_set_style_bg_color(tab_btns, tab_bg, LV_PART_MAIN);
@@ -429,6 +437,10 @@ script:
 
           // --- Music page: art container ---
           lv_obj_set_style_bg_color(id(lms_art_container), surface_bg, LV_PART_MAIN);
+
+          // --- Album search popup ---
+          lv_obj_set_style_bg_color(id(album_search_card), lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(album_search_title_bar), lv_color_make(0x25, 0x25, 0x25), LV_PART_MAIN);
 
           // --- Weather page: tabview ---
           lv_obj_t* tab_btns = lv_tabview_get_tab_btns(id(forecast_tabview));

@@ -1,0 +1,87 @@
+# ##################################################
+# Voice: Weather forecast
+# Reads NWS forecast for today, tonight, or named day
+# ##################################################
+- id: "voice_weather_forecast"
+  alias: "Voice: Weather forecast"
+  trigger:
+    - platform: conversation
+      command:
+        - "what is the [weather] forecast for today"
+        - "what is the weather today"
+        - "what is the forecast for today"
+        - "what is today's (weather|forecast)"
+        - "what is the weather forecast for tonight"
+        - "what is the weather tonight"
+        - "what is the forecast for tonight"
+        - "what is tonight's (weather|forecast)"
+        - "what is the [weather] forecast for tomorrow"
+        - "what is the weather tomorrow"
+        - "what is the forecast for tomorrow"
+        - "what is tomorrow's (weather|forecast)"
+        - "what is the [weather] forecast for {day}"
+        - "what is the weather [forecast] for {day}"
+        - "what is the forecast for {day}"
+  variables:
+    periods: "{{ state_attr('sensor.nws_forecast_mdz504', 'periods') }}"
+    requested_day: >
+      {% if trigger.slots.day is defined %}
+        {{ trigger.slots.day | lower | trim }}
+      {% elif 'tonight' in trigger.sentence | lower %}
+        tonight
+      {% elif 'tomorrow' in trigger.sentence | lower %}
+        tomorrow
+      {% else %}
+        today
+      {% endif %}
+    period_name: >
+      {% set d = requested_day %}
+      {% if d in ['today', 'this morning', 'this afternoon'] %}
+        {% set matches = periods | selectattr('name', 'search', '(?i)today|this morning|this afternoon|rest of') | list %}
+      {% elif d == 'tonight' %}
+        {% set matches = periods | selectattr('name', 'search', '(?i)tonight') | list %}
+      {% elif d == 'tomorrow' %}
+        {% set day_names = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}
+        {% set tomorrow = day_names[(now().weekday() + 1) % 7] %}
+        {% set matches = periods | selectattr('name', 'search', '(?i)^' ~ tomorrow ~ '$') | list %}
+      {% else %}
+        {% set matches = periods | selectattr('name', 'search', '(?i)^' ~ d ~ '$') | list %}
+      {% endif %}
+      {{ matches | map(attribute='name') | list | join(' and ') if matches else '' }}
+    forecast_text: >
+      {% set d = requested_day %}
+      {% if d in ['today', 'this morning', 'this afternoon'] %}
+        {% set day_matches = periods | selectattr('name', 'search', '(?i)today|this morning|this afternoon|rest of') | list %}
+        {% set night_matches = periods | selectattr('name', 'search', '(?i)tonight') | list %}
+        {% set all_matches = day_matches + night_matches %}
+      {% elif d == 'tonight' %}
+        {% set all_matches = periods | selectattr('name', 'search', '(?i)tonight') | list %}
+      {% elif d == 'tomorrow' %}
+        {% set day_names = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}
+        {% set tomorrow = day_names[(now().weekday() + 1) % 7] %}
+        {% set day_matches = periods | selectattr('name', 'search', '(?i)^' ~ tomorrow ~ '$') | list %}
+        {% set night_matches = periods | selectattr('name', 'search', '(?i)^' ~ tomorrow ~ ' night$') | list %}
+        {% set all_matches = day_matches + night_matches %}
+      {% else %}
+        {% set day_matches = periods | selectattr('name', 'search', '(?i)^' ~ d ~ '$') | list %}
+        {% set night_matches = periods | selectattr('name', 'search', '(?i)^' ~ d ~ ' night$') | list %}
+        {% set all_matches = day_matches + night_matches %}
+      {% endif %}
+      {% if all_matches %}
+        {% for p in all_matches %}{{ p.name }}: {{ p.detailedForecast }} {% endfor %}
+      {% else %}
+        I couldn't find a forecast for {{ requested_day }}.
+      {% endif %}
+  action:
+    - service: select.select_option
+      target:
+        entity_id: select.office_waveshare_esp32_p4_touch_lcd_7b_display_page
+      data:
+        option: "Weather"
+    - if:
+        - condition: template
+          value_template: "{{ forecast_text != '' }}"
+      then:
+        - set_conversation_response: "{{ forecast_text }}"
+      else:
+        - set_conversation_response: "Sorry, I couldn't find a forecast for {{ requested_day }}. Try asking for today, tonight, tomorrow, or a specific day of the week."

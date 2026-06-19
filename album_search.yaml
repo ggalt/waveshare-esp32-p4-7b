@@ -1,0 +1,234 @@
+---
+# Album search logic for LMS
+# Listens for album_search_trigger from HA, queries LMS directly,
+# populates a scrollable LVGL popup with tappable album rows.
+#
+# Uses the same text search as the HA voice command (albums 0 50 search:{artist})
+# so results match exactly. The search: parameter matches across album metadata
+# including artist names, so "The Shins" finds albums by both "The Shins" and
+# "The Shins and James Mercer".
+
+globals:
+  - id: album_search_ids
+    type: std::vector<int>
+  - id: album_search_names
+    type: std::vector<std::string>
+  - id: album_search_active
+    type: bool
+    initial_value: 'false'
+
+text_sensor:
+  - platform: homeassistant
+    id: album_search_trigger
+    entity_id: input_text.album_search_trigger
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                std::string val = id(album_search_trigger).state;
+                return !val.empty() && val != "unknown" && val != "unavailable";
+            then:
+              - lambda: 'ESP_LOGI("album_search", "Trigger received: %s", id(album_search_trigger).state.c_str());'
+              - script.execute:
+                  id: lms_search_albums
+                  artist_name: !lambda 'return id(album_search_trigger).state;'
+
+script:
+  # Search albums by artist name using text search (matches HA voice command query)
+  - id: lms_search_albums
+    parameters:
+      artist_name: string
+    then:
+      - lambda: |-
+          id(album_search_ids).clear();
+          id(album_search_names).clear();
+      # Switch to music page so the popup will be visible
+      - lvgl.page.show: music_page
+      - lambda: |-
+          auto call = id(display_page).make_call();
+          call.set_option("Music");
+          call.perform();
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            std::string escaped = artist_name;
+            size_t pos = 0;
+            while ((pos = escaped.find('"', pos)) != std::string::npos) {
+              escaped.replace(pos, 1, "\\\"");
+              pos += 2;
+            }
+            return "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"" +
+                   std::string("${lms_player_id}") +
+                   "\",[\"albums\",\"0\",\"50\",\"search:" + escaped + "\",\"tags:l\",\"sort:album\"]]}";
+          capture_response: true
+          max_response_buffer_size: 8192
+          on_error:
+            then:
+              - logger.log: "Album search HTTP request failed"
+          on_response:
+            then:
+              - lambda: |-
+                  if (response->status_code != 200) {
+                    ESP_LOGW("album_search", "Album search HTTP error %d", response->status_code);
+                    return;
+                  }
+                  ArduinoJson::JsonDocument doc;
+                  ArduinoJson::DeserializationError err = ArduinoJson::deserializeJson(doc, body);
+                  if (err) {
+                    ESP_LOGW("album_search", "Album JSON parse error: %s", err.c_str());
+                    return;
+                  }
+                  auto result = doc["result"];
+                  if (result.isNull()) {
+                    ESP_LOGW("album_search", "No result in album response");
+                    return;
+                  }
+                  auto albums = result["albums_loop"];
+                  if (!albums.is<ArduinoJson::JsonArray>()) {
+                    ESP_LOGI("album_search", "No albums found for '%s'", artist_name.c_str());
+                    return;
+                  }
+                  for (auto album : albums.as<ArduinoJson::JsonArray>()) {
+                    int album_id = album["id"] | 0;
+                    const char* album_name = album["album"] | "Unknown";
+                    id(album_search_ids).push_back(album_id);
+                    id(album_search_names).push_back(std::string(album_name));
+                  }
+                  ESP_LOGI("album_search", "Found %d albums for '%s'",
+                           id(album_search_ids).size(), artist_name.c_str());
+      # Show popup (with results or empty state)
+      - script.execute:
+          id: lms_populate_album_popup
+          artist_name: !lambda 'return artist_name;'
+
+  # Populate the LVGL popup with album rows
+  - id: lms_populate_album_popup
+    parameters:
+      artist_name: string
+    then:
+      - lambda: |-
+          // Update title
+          char title_buf[128];
+          snprintf(title_buf, sizeof(title_buf), "Albums by %s", artist_name.c_str());
+          lv_label_set_text(id(album_search_title_label), title_buf);
+
+          // Clear existing list items
+          lv_obj_clean(id(album_search_list));
+
+          // Read theme colors for dynamic items
+          uint32_t pc = id(theme_secondary_text_color);
+          lv_color_t num_color = lv_color_make((pc >> 16) & 0xFF, (pc >> 8) & 0xFF, pc & 0xFF);
+
+          auto& ids = id(album_search_ids);
+          auto& names = id(album_search_names);
+
+          if (names.empty()) {
+            // Empty state
+            lv_obj_t* empty_label = lv_label_create(id(album_search_list));
+            lv_label_set_text(empty_label, "No albums found");
+            lv_obj_set_style_text_font(empty_label, id(nunito_24), LV_PART_MAIN);
+            lv_obj_set_style_text_color(empty_label, num_color, LV_PART_MAIN);
+            lv_obj_set_style_pad_top(empty_label, 20, LV_PART_MAIN);
+          } else {
+            for (size_t i = 0; i < names.size(); i++) {
+              // Row container
+              lv_obj_t* row = lv_obj_create(id(album_search_list));
+              lv_obj_set_width(row, lv_pct(100));
+              lv_obj_set_height(row, LV_SIZE_CONTENT);
+              lv_obj_set_style_min_height(row, 48, LV_PART_MAIN);
+              lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
+              lv_obj_set_style_bg_opa(row, LV_OPA_20, LV_STATE_PRESSED);
+              lv_obj_set_style_bg_color(row, lv_color_white(), LV_STATE_PRESSED);
+              lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
+              lv_obj_set_style_pad_left(row, 12, LV_PART_MAIN);
+              lv_obj_set_style_pad_right(row, 12, LV_PART_MAIN);
+              lv_obj_set_style_pad_top(row, 8, LV_PART_MAIN);
+              lv_obj_set_style_pad_bottom(row, 8, LV_PART_MAIN);
+              lv_obj_set_style_radius(row, 8, LV_PART_MAIN);
+              lv_obj_set_scrollbar_mode(row, LV_SCROLLBAR_MODE_OFF);
+
+              // Flex layout for row
+              lv_obj_set_layout(row, LV_LAYOUT_FLEX);
+              lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+              lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+              lv_obj_set_style_pad_column(row, 12, LV_PART_MAIN);
+
+              // Number label
+              char num_buf[8];
+              snprintf(num_buf, sizeof(num_buf), "%d.", (int)(i + 1));
+              lv_obj_t* num_label = lv_label_create(row);
+              lv_label_set_text(num_label, num_buf);
+              lv_obj_set_style_text_font(num_label, id(nunito_20), LV_PART_MAIN);
+              lv_obj_set_style_text_color(num_label, num_color, LV_PART_MAIN);
+              lv_obj_set_style_min_width(num_label, 36, LV_PART_MAIN);
+
+              // Album name label
+              lv_obj_t* name_label = lv_label_create(row);
+              lv_label_set_text(name_label, names[i].c_str());
+              lv_obj_set_style_text_font(name_label, id(nunito_24), LV_PART_MAIN);
+              lv_obj_set_flex_grow(name_label, 1);
+              // Read primary text color from the title label (inherits theme)
+              lv_obj_t* ref = id(album_search_title_label);
+              lv_color_t ref_color = lv_obj_get_style_text_color(ref, LV_PART_MAIN);
+              lv_obj_set_style_text_color(name_label, ref_color, LV_PART_MAIN);
+              lv_label_set_long_mode(name_label, LV_LABEL_LONG_DOT);
+
+              // Store index in user_data for click handler
+              lv_obj_set_user_data(row, (void*)(intptr_t)i);
+              lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
+
+              // Click handler
+              lv_obj_add_event_cb(row, [](lv_event_t* e) {
+                lv_obj_t* target = (lv_obj_t*)lv_event_get_target(e);
+                int index = (int)(intptr_t)lv_obj_get_user_data(target);
+                auto& search_ids = id(album_search_ids);
+                if (index >= 0 && index < (int)search_ids.size()) {
+                  int album_id = search_ids[index];
+                  ESP_LOGI("album_search", "Selected album index %d, id %d", index, album_id);
+                  id(lms_play_album_by_id).execute(album_id);
+                }
+              }, LV_EVENT_CLICKED, NULL);
+            }
+          }
+
+          // Show overlay
+          lv_obj_clear_flag(id(album_search_overlay), LV_OBJ_FLAG_HIDDEN);
+          id(album_search_active) = true;
+
+          // Scroll list to top
+          lv_obj_scroll_to_y(id(album_search_list), 0, LV_ANIM_OFF);
+
+  # Play an album by its LMS ID
+  - id: lms_play_album_by_id
+    parameters:
+      album_id: int
+    then:
+      - http_request.post:
+          url: !lambda 'return std::string("${lms_server_url}") + "/jsonrpc.js";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+              "{\"id\":1,\"method\":\"slim.request\",\"params\":[\"%s\",[\"playlist\",\"loadtracks\",\"album.id=%d\"]]}",
+              "${lms_player_id}", album_id);
+            return std::string(buf);
+      - script.execute: lms_close_album_search
+      - delay: 500ms
+      - script.execute: lms_poll_status
+
+  # Close the album search popup
+  - id: lms_close_album_search
+    then:
+      - lambda: |-
+          lv_obj_add_flag(id(album_search_overlay), LV_OBJ_FLAG_HIDDEN);
+          id(album_search_active) = false;
+      # Clear the trigger so the same artist can be searched again
+      - homeassistant.service:
+          service: input_text.set_value
+          data:
+            entity_id: input_text.album_search_trigger
+            value: ""

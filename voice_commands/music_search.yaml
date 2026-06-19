@@ -1,0 +1,304 @@
+# ##################################################
+# Voice: Play album by title
+# Plays an album searched by title only
+# ##################################################
+- id: "voice_play_album_by_title"
+  alias: "Voice: Play album by title"
+  trigger:
+    - platform: conversation
+      command:
+        - "play [the] album {album}"
+        - "put on [the] album {album}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: albums
+        parameters:
+          - "0"
+          - "1"
+          - "search:{{ trigger.slots.album | trim }}"
+          - "tags:l"
+    - variables:
+        album_id: "{{ state_attr(player_entity, 'query_result')['albums_loop'][0]['id'] }}"
+        album_name: "{{ state_attr(player_entity, 'query_result')['albums_loop'][0]['album'] }}"
+    - service: squeezebox.call_method
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: playlist
+        parameters:
+          - loadtracks
+          - "album.id={{ album_id }}"
+    - set_conversation_response: "Playing {{ album_name }}"
+
+# ##################################################
+# Voice: Play album by title and artist
+# Plays an album searched by title, filtered by artist
+# ##################################################
+- id: "voice_play_album_by_artist"
+  alias: "Voice: Play album by title and artist"
+  trigger:
+    - platform: conversation
+      command:
+        - "play [the] album {album} by {artist}"
+        - "put on [the] album {album} by {artist}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: artists
+        parameters:
+          - "0"
+          - "1"
+          - "search:{{ trigger.slots.artist | trim }}"
+    - variables:
+        artist_id: "{{ state_attr(player_entity, 'query_result')['artists_loop'][0]['id'] }}"
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: albums
+        parameters:
+          - "0"
+          - "1"
+          - "search:{{ trigger.slots.album | trim }}"
+          - "artist_id:{{ artist_id }}"
+          - "tags:l"
+    - variables:
+        album_id: "{{ state_attr(player_entity, 'query_result')['albums_loop'][0]['id'] }}"
+        album_name: "{{ state_attr(player_entity, 'query_result')['albums_loop'][0]['album'] }}"
+    - service: squeezebox.call_method
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: playlist
+        parameters:
+          - loadtracks
+          - "album.id={{ album_id }}"
+    - set_conversation_response: "Playing {{ album_name }} by {{ trigger.slots.artist }}"
+
+# ##################################################
+# Voice: List albums by artist
+# Lists albums for a given artist, numbered for follow-up selection
+# ##################################################
+- id: "voice_list_albums"
+  alias: "Voice: List albums by artist"
+  trigger:
+    - platform: conversation
+      command:
+        - "list [all] albums by {artist}"
+        - "list the albums by {artist}"
+        - "what albums do you have by {artist}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+  action:
+    - service: squeezebox.call_query
+      target:
+        entity_id: "{{ player_entity }}"
+      data:
+        command: albums
+        parameters:
+          - "0"
+          - "50"
+          - "search:{{ trigger.slots.artist | trim }}"
+          - "tags:l"
+          - "sort:album"
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.last_music_search_artist
+      data:
+        value: "{{ trigger.slots.artist }}"
+    - variables:
+        all_albums: "{{ state_attr(player_entity, 'query_result')['albums_loop'] | default([]) }}"
+        total: "{{ all_albums | count }}"
+        numbered_spoken: >
+          {% set ns = namespace(result='') %}
+          {% for album in all_albums[:5] %}
+            {% set ns.result = ns.result ~ loop.index ~ ', ' ~ album.album ~ '. ' %}
+          {% endfor %}
+          {{ ns.result }}
+        numbered_notification: >
+          {% set ns = namespace(result='') %}
+          {% for album in all_albums %}
+            {% set ns.result = ns.result ~ loop.index ~ '. ' ~ album.album ~ '\n' %}
+          {% endfor %}
+          {{ ns.result }}
+        stored_ids: "{{ all_albums | map(attribute='id') | list | join(',') }}"
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.last_album_search_ids
+      data:
+        value: "{{ stored_ids }}"
+    - service: persistent_notification.create
+      data:
+        title: "Albums by {{ trigger.slots.artist }}"
+        message: "{{ numbered_notification }}"
+    # Trigger the on-screen album search popup on the ESP32
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.album_search_trigger
+      data:
+        value: "{{ trigger.slots.artist }}"
+    # Switch display to music page so the popup is visible
+    - service: select.select_option
+      target:
+        entity_id: "select.{{ device_name }}_display_page"
+      data:
+        option: "Music"
+    - set_conversation_response: >
+        I found {{ total }} albums by {{ trigger.slots.artist }}.
+        {% if total | int > 5 %}
+        The first 5 are. {{ numbered_spoken }}
+        They are listed on the screen. Tap an album to play it.
+        {% else %}
+        They are. {{ numbered_spoken }}
+        They are listed on the screen. Tap an album to play it.
+        {% endif %}
+
+# ##################################################
+# Voice: Play album by number
+# Plays album by its number from the previous list results
+# ##################################################
+- id: "voice_play_by_number"
+  alias: "Voice: Play album by number"
+  trigger:
+    - platform: conversation
+      command:
+        - "play number {number}"
+        - "play [the] {number}th [one]"
+        - "play [the] {number}st [one]"
+        - "play [the] {number}nd [one]"
+        - "play [the] {number}rd [one]"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+    number: >
+      {% set words = {
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+        'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+        'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+        'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24, 'twenty five': 25,
+        'twenty six': 26, 'twenty seven': 27, 'twenty eight': 28, 'twenty nine': 29, 'thirty': 30,
+        'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5,
+        'sixth': 6, 'seventh': 7, 'eighth': 8, 'ninth': 9, 'tenth': 10,
+        'eleventh': 11, 'twelfth': 12, 'thirteenth': 13, 'fourteenth': 14, 'fifteenth': 15,
+        'sixteenth': 16, 'seventeenth': 17, 'eighteenth': 18, 'nineteenth': 19, 'twentieth': 20,
+        'twenty first': 21, 'twenty second': 22, 'twenty third': 23, 'twenty fourth': 24, 'twenty fifth': 25,
+        'twenty sixth': 26, 'twenty seventh': 27, 'twenty eighth': 28, 'twenty ninth': 29, 'thirtieth': 30} %}
+      {% set raw = trigger.slots.number | string | lower | trim %}
+      {% if raw | int(0) > 0 %}
+        {{ raw | int }}
+      {% elif raw in words %}
+        {{ words[raw] }}
+      {% else %}
+        0
+      {% endif %}
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Debug"
+        message: >
+          stored_ids: {{ states('input_text.last_album_search_ids') }}
+          count: {{ states('input_text.last_album_search_ids').split(',') | count }}
+          number: {{ number }}
+    - if:
+        - condition: template
+          value_template: >
+            {{ states('input_text.last_album_search_ids') not in ['', 'unknown']
+               and number | int > 0
+               and number | int <= states('input_text.last_album_search_ids').split(',') | count }}
+      then:
+        - variables:
+            album_id: "{{ states('input_text.last_album_search_ids').split(',')[number | int - 1] | trim }}"
+        - service: squeezebox.call_method
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: playlist
+            parameters:
+              - loadtracks
+              - "album.id={{ album_id }}"
+        - set_conversation_response: "Playing album number {{ number }}"
+      else:
+        - set_conversation_response: >
+            {% set total = states('input_text.last_album_search_ids').split(',') | count %}
+            {% if states('input_text.last_album_search_ids') in ['', 'unknown'] %}
+              There is no album list to choose from. Try asking to list albums by an artist first.
+            {% elif number | int > total %}
+              Number {{ number }} is out of range. There are only {{ total }} albums in the list. Check the notification for the full numbered list.
+            {% else %}
+              Sorry, I could not find that album number.
+            {% endif %}
+
+# ##################################################
+# Voice: Filter albums within list
+# Finds albums within populated list (populated by 'List albums by artist' above)
+# ##################################################
+- id: "voice_filter_albums"
+  alias: "Voice: Filter albums"
+  trigger:
+    - platform: conversation
+      command:
+        - "find albums with {term}"
+        - "search [those] [albums] for {term}"
+        - "filter [albums] by {term}"
+  variables:
+    device_name: "{{ device_attr(trigger.device_id, 'name') | lower | replace(' ', '_') | replace('-', '_') }}"
+    player_entity: "{{ states('sensor.' ~ device_name ~ '_player_entity') }}"
+    last_artist: "{{ states('input_text.last_music_search_artist') }}"
+  action:
+    - if:
+        - condition: template
+          value_template: "{{ last_artist != '' and last_artist != 'unknown' }}"
+      then:
+        - service: squeezebox.call_query
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: artists
+            parameters:
+              - "0"
+              - "1"
+              - "search:{{ last_artist }}"
+        - variables:
+            artist_id: "{{ state_attr(player_entity, 'query_result')['artists_loop'][0]['id'] }}"
+        - service: squeezebox.call_query
+          target:
+            entity_id: "{{ player_entity }}"
+          data:
+            command: albums
+            parameters:
+              - "0"
+              - "50"
+              - "search:{{ trigger.slots.term | trim }}"
+              - "artist_id:{{ artist_id }}"
+              - "tags:l"
+        - variables:
+            filtered: >
+              {{ state_attr(player_entity, 'query_result')['albums_loop'] | default([]) }}
+            album_list: >
+              {{ filtered[:5] | map(attribute='album') | list | join('. ') }}
+        - service: persistent_notification.create
+          data:
+            title: "Filtered Albums"
+            message: >
+              {{ filtered | map(attribute='album') | list | join('\n') }}
+        - set_conversation_response: >
+            Found {{ filtered | count }} albums matching {{ trigger.slots.term }}.
+            {% if filtered | count > 0 %}
+            The first {{ [filtered | count, 5] | min }} are. {{ album_list }}.
+            Check the notification for the full list.
+            {% endif %}
+      else:
+        - set_conversation_response: "There are no previous search results to filter. Try asking to list albums by an artist first."

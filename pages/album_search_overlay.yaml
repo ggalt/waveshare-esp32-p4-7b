@@ -1,0 +1,96 @@
+---
+# Album search popup overlay for music page
+# Shows scrollable list of album search results on top of music_page
+# Items are created dynamically by album_search.yaml scripts
+
+lvgl:
+  pages:
+    - id: !extend music_page
+      widgets:
+        # Full-screen semi-transparent backdrop
+        - obj:
+            id: album_search_overlay
+            hidden: true
+            width: 100%
+            height: 100%
+            bg_color: black
+            bg_opa: 60%
+            scrollable: false
+            on_click:
+              - script.execute: lms_close_album_search
+            widgets:
+              # Centered card
+              - obj:
+                  id: album_search_card
+                  align: CENTER
+                  width: 700
+                  height: 440
+                  bg_color: 0x1A1A1A
+                  bg_opa: COVER
+                  radius: 16
+                  border_width: 0
+                  pad_all: 0
+                  scrollable: false
+                  # Stop clicks on card from closing overlay
+                  on_click: []
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                    flex_align_main: START
+                    flex_align_cross: CENTER
+                  widgets:
+                    # Title bar
+                    - obj:
+                        id: album_search_title_bar
+                        width: 100%
+                        height: 56
+                        bg_color: 0x252525
+                        bg_opa: COVER
+                        radius: 0
+                        scrollable: false
+                        pad_left: 20
+                        pad_right: 12
+                        layout:
+                          type: FLEX
+                          flex_flow: ROW
+                          flex_align_main: SPACE_BETWEEN
+                          flex_align_cross: CENTER
+                        widgets:
+                          - label:
+                              id: album_search_title_label
+                              text_font: nunito_24
+                              styles: primary_text_style
+                              text: "Albums"
+                              long_mode: DOT
+                              flex_grow: 1
+                          - button:
+                              id: album_search_close_btn
+                              width: 44
+                              height: 44
+                              bg_opa: TRANSP
+                              on_click:
+                                - script.execute: lms_close_album_search
+                              widgets:
+                                - label:
+                                    text_font: mdi_music_40
+                                    styles: primary_text_style
+                                    align: CENTER
+                                    text: $mdi_close
+                    # Scrollable list container - children added dynamically via C++
+                    - obj:
+                        id: album_search_list
+                        width: 100%
+                        flex_grow: 1
+                        bg_opa: TRANSP
+                        pad_left: 8
+                        pad_right: 8
+                        pad_top: 4
+                        pad_bottom: 4
+                        scrollbar_mode: AUTO
+                        layout:
+                          type: FLEX
+                          flex_flow: COLUMN
+                          flex_align_main: START
+                          flex_align_cross: CENTER
+                          pad_row: 2
+                        widgets: []

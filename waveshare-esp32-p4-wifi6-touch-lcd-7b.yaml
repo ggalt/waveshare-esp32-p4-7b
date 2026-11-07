@@ -30,13 +30,6 @@ substitutions:
   player_mac: !secret player_id
   player_entity: !secret player_entity
 
-# Override micro_wake_word with larger stack size for P4 (default 3072 causes stack overflow)
-external_components:
-  - source:
-      type: local
-      path: components
-    components: [micro_wake_word]
-
 esp32:
   framework:
     sdkconfig_options:

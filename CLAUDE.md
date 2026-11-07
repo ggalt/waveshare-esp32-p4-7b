@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an ESPHome development workspace for building touchscreen control panels that connect to Home Assistant. It contains:
 
 - **Standalone YAML configs** (root level and in the 'pages' subdirectory) -- device-specific configurations being actively developed
-- **`esphome-modular-lvgl-buttons/`** -- a cloned library (git repo: `agillis/esphome-modular-lvgl-buttons`) providing modular, reusable LVGL UI components for ESP32 touchscreen devices. This is a **separate git repository** -- changes here should be intentional and considered for upstream contribution.
+- **`esphome-modular-lvgl-buttons/`** -- a **git submodule** (`agillis/esphome-modular-lvgl-buttons`, pinned at `b1892eb`) providing modular, reusable LVGL UI components for ESP32 touchscreen devices. We cannot push to it, so **never edit files inside it** -- any edit there is lost on clone.
+- **`local/`** -- project-owned copies of library files that needed changes (P4 hardware definition, media player/voice assistant, theme style, loading screen). The root config `!include`s these instead of the submodule versions. To change another library file, copy it into `local/` at the same relative path and repoint its `!include` in the root config.
 - **`tests/`** -- test and experimental configuration files
 - **`secrets.yaml`** -- WiFi credentials and location data (gitignored, never commit)
 
@@ -33,7 +34,7 @@ esphome logs <file>.yaml
 esphome clean <file>.yaml
 ```
 
-All commands run from `/home/esp32Dev/espHomeProjects/`. ESPHome is installed in a virtualenv at `/home/esp32Dev/esphome-venv/`. The installed version is 2026.5.3.
+All commands run from the project directory (`/home/esp32Dev/espHomeProjects/waveshare-esp32-p4-7b/`). ESPHome is installed in a virtualenv at `/home/esp32Dev/esphome-venv/`. The installed version is 2026.10.2; the minimum supported is 2026.7.0 (new `image:` platform format). `micro_wake_word` uses the built-in ESPHome component (the old local override in `components/` was removed -- upstream already uses an 8192-byte inference stack on the P4).
 
 **Validation workflow:** Always run `esphome config <file>.yaml` before `esphome run` to catch YAML errors quickly. The `config` command outputs the fully merged/resolved configuration, making it useful for debugging package composition issues.
 
@@ -42,7 +43,7 @@ All commands run from `/home/esp32Dev/espHomeProjects/`. ESPHome is installed in
 ESPHome YAML configs use a **package/include system** for modularity. A typical device config works like this:
 
 1. **Root YAML file** (e.g., `waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml`) -- defines the device name, substitution variables, and pulls in packages
-2. **Hardware file** (`esphome-modular-lvgl-buttons/hardware/*.yaml`) -- defines chip variant, pin mappings, display driver, touchscreen, backlight, and audio hardware for a specific board
+2. **Hardware file** (`local/hardware/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml` for this device; other boards in `esphome-modular-lvgl-buttons/hardware/*.yaml`) -- defines chip variant, pin mappings, display driver, touchscreen, backlight, and audio hardware for a specific board
 3. **Common packages** (`esphome-modular-lvgl-buttons/common/*.yaml`) -- shared configs for WiFi, OTA, colors, fonts, themes, time sync
 4. **Button/widget packages** (`esphome-modular-lvgl-buttons/buttons/*.yaml`) -- reusable LVGL UI components included with `!include` + `vars:` for parameterization
 5. **Page packages** (`esphome-modular-lvgl-buttons/pages/*.yaml`) -- full-screen layouts (boot screen, info screen, color picker)
@@ -80,7 +81,7 @@ The `| default()` filter provides fallback values for optional `vars:` parameter
 
 The `backlight_time.yaml` package calls `script.execute: time_update` every minute and on time sync. The **root config must define this script** to update any time-displaying widgets. See `waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml` for the pattern.
 
-Similarly, the root config must define `script: update_loading_page` if using the loading screen package (`pages/loading_480px.yaml`), triggered via `on_boot`.
+Similarly, the root config must define `script: update_loading_page` if using the loading screen package (`local/pages/loading_480px.yaml`), triggered via `on_boot`.
 
 ## ESPHome YAML Conventions
 
@@ -104,7 +105,7 @@ The Waveshare ESP32-P4 boards (the primary hardware being developed for) have un
 
 ### Audio Pipeline (P4 7B board)
 
-The hardware file sets up a multi-stage audio pipeline: `ES8311 DAC` + `ES7210 ADC` over I2C, with I2S bus for speaker/microphone data. The speaker chain is: `i2s_audio speaker` → `mixer` (announcement + media inputs) → `resampler` stages. A GPIO switch (`GPIO53`) controls the hardware amplifier. The `media_player-voice_assistant.yaml` package builds on these hardware primitives for voice assistant and media playback.
+The hardware file sets up a multi-stage audio pipeline: `ES8311 DAC` + `ES7210 ADC` over I2C, with I2S bus for speaker/microphone data. The speaker chain is: `i2s_audio speaker` → `mixer` (announcement + media inputs) → `resampler` stages. A GPIO switch (`GPIO53`) controls the hardware amplifier. The `local/hardware/media_player-voice_assistant.yaml` package builds on these hardware primitives for voice assistant and media playback.
 
 ## Image Encoding for LVGL Displays
 
@@ -114,32 +115,37 @@ The LVGL display runs at **`color_depth: 16`** (RGB565) with **`byte_order: litt
 
 **ESPHome's image encoder defaults to big-endian**, but this LVGL display is configured for **little-endian**. If `byte_order` is not explicitly set on `image:` declarations, the pixel data will be byte-swapped, causing severe green/magenta color corruption.
 
-**Always set `byte_order: little_endian`** on image declarations using `defaults:`:
+Images use the **platform list format** (ESPHome 2026.7.0+; the old mapping format with `rgb565:` / `alpha_channel:` keys is removed in 2027.1.0). **Always set `byte_order: little_endian`** in each entry's `defaults:`:
 ```yaml
 image:
-  defaults:
-    byte_order: little_endian
-  rgb565:
-    alpha_channel:
+  - platform: file
+    defaults:
+      type: rgb565
+      transparency: alpha_channel
+      byte_order: little_endian
+    files:
       - file: path/to/image.png
         id: my_image
         resize: 100x100
 ```
 
-This applies to all `image:` blocks in any package file. SVG icons with flat colors may appear to work without it (the corruption is less visible on saturated colors), but photographic images will be severely corrupted.
+`defaults:` applies **only to the `files:` of its own entry** -- it is not global. Every `image:` block in every package file must set `byte_order` itself. (In the old format a single `defaults:` leaked to all merged images, which masked missing settings.) SVG icons with flat colors may appear to work without it (the corruption is less visible on saturated colors), but photographic images will be severely corrupted.
+
+**Never mix formats:** every `image:` block across all packages must be a list of `- platform:` entries. A mapping-shaped `image:` anywhere replaces the package-contributed images instead of merging, producing misleading `Couldn't find ID` errors in other files.
 
 ### Image type guidelines
 
-- **SVG icons and graphics:** Use `rgb565:` with `alpha_channel:` transparency.
+- **SVG icons and graphics:** Use `type: rgb565` with `transparency: alpha_channel`.
 
-- **Photographic or near-grayscale images (e.g., moon phases):** Use `rgb565:` with `alpha_channel:`, but **pre-convert the source to true grayscale** (R=G=B=luminance) in the RGBA PNG. This avoids the subtle green tint that RGB565's unequal 5-6-5 bit depth causes on warm-toned photos.
+- **Photographic or near-grayscale images (e.g., moon phases):** Use `type: rgb565` with `transparency: alpha_channel`, but **pre-convert the source to true grayscale** (R=G=B=luminance) in the RGBA PNG. This avoids the subtle green tint that RGB565's unequal 5-6-5 bit depth causes on warm-toned photos.
   - **Do NOT use `grayscale:` type** -- LVGL on this device does not render GRAYSCALE images (they appear invisible).
   - See `pages/images/Moon/generate_phases.py` for the conversion pattern.
 
-- **Online/dynamic JPEG images (e.g., album art):** Use the `online_image:` component with `type: RGB565` and `byte_order: little_endian`.
+- **Online/dynamic JPEG images (e.g., album art):** Use the `online_image` platform of `image:` with `type: RGB565` and `byte_order: little_endian`.
   ```yaml
-  online_image:
-    - url: "http://server/image.jpg"
+  image:
+    - platform: online_image
+      url: "http://server/image.jpg"
       id: my_image
       format: JPEG
       type: RGB565

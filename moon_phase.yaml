@@ -25,10 +25,12 @@ text_sensor:
             else lv_img_set_src(id(moon_phase_icon), id(moon_new_moon));
 
 image:
-  defaults:
-    byte_order: little_endian
-  rgb565:
-    alpha_channel:
+  - platform: file
+    defaults:
+      type: rgb565
+      transparency: alpha_channel
+      byte_order: little_endian
+    files:
       - file: pages/images/Moon/100/new_moon.png
         id: moon_new_moon
         resize: 100x100

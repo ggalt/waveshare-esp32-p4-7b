@@ -38,8 +38,12 @@ text_sensor:
               args: ['id(outdoor_temperature).state.c_str()']
 
 image:
-  rgb565:
-    alpha_channel:
+  - platform: file
+    defaults:
+      type: rgb565
+      transparency: alpha_channel
+      byte_order: little_endian
+    files:
       - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/nt_clear.svg
         id: clear_night_100
         resize: 100x100

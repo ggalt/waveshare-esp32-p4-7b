@@ -561,8 +561,12 @@ api:
 
 # --- 80px weather icons for forecast cards ---
 image:
-  rgb565:
-    alpha_channel:
+  - platform: file
+    defaults:
+      type: rgb565
+      transparency: alpha_channel
+      byte_order: little_endian
+    files:
       - file: esphome-modular-lvgl-buttons/weather_homeassistant/assets/images/nt_clear.svg
         id: clear_night_80
         resize: 80x80

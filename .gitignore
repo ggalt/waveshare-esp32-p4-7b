@@ -15,8 +15,8 @@ tests/
 debug*.txt
 *.log
 
-# Setup script (local environment specific)
-setup.sh
+# Python bytecode
+__pycache__/
 
 # Temporary and editor files
 *.swp

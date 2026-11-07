@@ -4,6 +4,25 @@ This is a set of files to set up the [Waveshare ESP32-P4-WIFI6-7inch-Touch-LCD(B
 
 This is a personal project, set up for the way I work and it may not work for you, but may give you ideas about how to create your own Voice Assistant.  The device is set up with 3 pages: a clock, a weather page and a page that displays and allows you to control an associated Lyrion Music Player (I've used a piCorePlayer).  The Waveshare device has a few limitations, such as sharing the same bus for the mic and speaker, which means it can't play music AND listen for your commands (which is why I used the associated player approach).
 
+## Requirements and setup
+
+- **ESPHome 2026.7.0 or newer** (tested with 2026.10.2). Earlier versions do not support the `image:` platform format used here.
+- The UI is built on [esphome-modular-lvgl-buttons](https://github.com/agillis/esphome-modular-lvgl-buttons), included as a git submodule. Clone with submodules:
+
+```
+git clone --recurse-submodules https://github.com/ggalt/waveshare-esp32-p4-7b.git
+cd waveshare-esp32-p4-7b
+./setup.sh          # creates ~/esphome-venv and installs ESPHome
+source ~/esphome-venv/bin/activate
+esphome run waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+```
+
+The few library files that needed device-specific changes (display rotation, touch mirroring, theme handling, boot screen) are kept as copies in `local/` rather than modified inside the submodule, so the submodule stays identical to upstream.
+
+The device also exposes **Day Colors Start / Night Colors Start** (Sunrise, Sunset, or Scheduled Time) and **Day/Night Colors Time** as configuration entities in Home Assistant, to control when the display switches between its day and night color schemes.
+
+## Configuration
+
 The player requires a 'secrets.yaml' file in the main directory in the form of:
 
 ```

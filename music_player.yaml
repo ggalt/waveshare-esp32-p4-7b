@@ -43,8 +43,9 @@ substitutions:
   lms_player_id: !secret player_id
   lms_server_url: !secret lms_server
 
-online_image:
-  - url: "${lms_server_url}/music/current/cover_200x200.jpg?player=${lms_player_id}"
+image:
+  - platform: online_image
+    url: "${lms_server_url}/music/current/cover_200x200.jpg?player=${lms_player_id}"
     id: lms_album_art
     format: JPEG
     type: RGB565

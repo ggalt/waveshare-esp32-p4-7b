@@ -282,15 +282,15 @@ packages:
   # WiFi, CPU temp, uptime, device info sensors (stripped - no info screen labels)
   sensors: !include sensors_clock.yaml
   # LVGL theme, page/button styles
-  theme_style: !include esphome-modular-lvgl-buttons/common/theme_style.yaml
+  theme_style: !include local/common/theme_style.yaml
   # Time sync (HA), sun tracking, brightness modes, idle dimming
   backlight: !include esphome-modular-lvgl-buttons/common/backlight_time.yaml
   # Board definition (chip, display, touch, audio, I2C)
-  hardware: !include esphome-modular-lvgl-buttons/hardware/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+  hardware: !include local/hardware/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
   # Media player + voice assistant (wake word, noise suppression)
-  media_voice: !include esphome-modular-lvgl-buttons/hardware/media_player-voice_assistant.yaml
+  media_voice: !include local/hardware/media_player-voice_assistant.yaml
   # Boot screen + api: with HA connection handling
-  loading_screen: !include esphome-modular-lvgl-buttons/pages/loading_480px.yaml
+  loading_screen: !include local/pages/loading_480px.yaml
   # Weather condition icon + temperature from Home Assistant
   weather: !include weather_clock.yaml
   # Moon phase icon from Home Assistant

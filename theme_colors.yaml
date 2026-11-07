@@ -22,13 +22,96 @@ globals:
     type: uint32_t
     initial_value: '0x666666'   # gray (dark mode default)
 
+# Day/Night color schedule, configurable from Home Assistant.
+# Each change can happen at Sunrise, Sunset, or a Scheduled Time.
+# Option indexes are used in apply_theme_colors: 0=Sunrise, 1=Sunset, 2=Scheduled Time
+select:
+  - platform: template
+    name: "Day Colors Start"
+    id: theme_day_trigger
+    icon: mdi:weather-sunny
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - Sunrise
+      - Sunset
+      - Scheduled Time
+    initial_option: Sunrise
+    on_value:
+      then:
+        - script.execute: apply_theme_colors
+  - platform: template
+    name: "Night Colors Start"
+    id: theme_night_trigger
+    icon: mdi:weather-night
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - Sunrise
+      - Sunset
+      - Scheduled Time
+    initial_option: Sunset
+    on_value:
+      then:
+        - script.execute: apply_theme_colors
+
+# Times used when the matching trigger above is "Scheduled Time"
+datetime:
+  - platform: template
+    name: "Day Colors Time"
+    id: theme_day_time
+    type: time
+    icon: mdi:clock-start
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "07:00"
+    on_value:
+      then:
+        - script.execute: apply_theme_colors
+  - platform: template
+    name: "Night Colors Time"
+    id: theme_night_time
+    type: time
+    icon: mdi:clock-end
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "21:00"
+    on_value:
+      then:
+        - script.execute: apply_theme_colors
+
 script:
-  # Orchestrator: checks sun position + theme index, calls the appropriate palette
+  # Orchestrator: checks the day/night schedule + theme index, calls the appropriate palette.
+  # Runs every minute (via time_update), so scheduled changes take effect on the minute.
   - id: apply_theme_colors
     then:
       - if:
           condition:
-            sun.is_above_horizon:
+            lambda: |-
+              auto now = id(system_time).now();
+              if (!now.is_valid())
+                return id(sun_sun).is_above_horizon();
+              // Timestamp of the next occurrence of a trigger (0 = none, e.g. polar day/night)
+              auto next_event = [&](int trigger, datetime::TimeEntity *t) -> time_t {
+                if (trigger == 2) {
+                  int delta = (t->hour * 3600 + t->minute * 60) - (now.hour * 3600 + now.minute * 60 + now.second);
+                  if (delta <= 0)
+                    delta += 86400;
+                  return now.timestamp + delta;
+                }
+                auto ev = trigger == 0 ? id(sun_sun).sunrise(-0.83333) : id(sun_sun).sunset(-0.83333);
+                return ev.has_value() ? ev->timestamp : 0;
+              };
+              time_t next_day = next_event(id(theme_day_trigger).active_index().value_or(0), id(theme_day_time));
+              time_t next_night = next_event(id(theme_night_trigger).active_index().value_or(1), id(theme_night_time));
+              if (next_day == 0 || next_night == 0)
+                return id(sun_sun).is_above_horizon();
+              // Daytime if the switch to night colors comes before the next switch to day colors
+              return next_night < next_day;
           then:
             - if:
                 condition:

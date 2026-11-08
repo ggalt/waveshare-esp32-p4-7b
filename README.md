@@ -21,6 +21,8 @@ The few library files that needed device-specific changes (display rotation, tou
 
 The device also exposes **Day Colors Start / Night Colors Start** (Sunrise, Sunset, or Scheduled Time) and **Day/Night Colors Time** as configuration entities in Home Assistant, to control when the display switches between its day and night color schemes.
 
+WiFi is provided by an ESP32-C6 co-processor running its own firmware. Waveshare ships it with an old version that causes WiFi connection errors, so the device exposes a **WiFi Co-processor Firmware** update entity (in the device's Configuration section in Home Assistant). Install it once, with stable power; afterwards the boot log should show `Coprocessor version: 2.12.13` instead of "unknown".
+
 ## Configuration
 
 The player requires a 'secrets.yaml' file in the main directory in the form of:

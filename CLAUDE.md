@@ -98,6 +98,8 @@ Similarly, the root config must define `script: update_loading_page` if using th
 The Waveshare ESP32-P4 boards (the primary hardware being developed for) have unique requirements:
 - Use `esp-idf` framework (not Arduino)
 - Require `esp32_hosted:` section for the ESP32-C6 WiFi co-processor (the P4 has no native WiFi)
+- The C6 runs its own esp-hosted firmware, updated separately from the P4. The root config has an `update:` entity (`platform: esp32_hosted`, `type: http`, ESPHome's esp32c6 manifest) that installs it from Home Assistant; it only offers versions <= the host esp_hosted library (2.12.13 with ESP-IDF 5.5.6). Factory C6 firmware is too old to answer the version RPC (`Response not received for Req_GetCoprocessorFwVersion`, version shown as "unknown"); after updating, boot logs `Coprocessor version: 2.12.13`. USB/JTAG only recovers the P4, not the C6 -- keep power stable during a C6 update.
+- WiFi uses `fast_connect: false` (scan and pick the strongest AP) and `post_connect_roaming: false` (proactive roaming over esp32_hosted failed on the old C6 firmware; a real disconnect still rescans and joins the best AP)
 - Need `psram:` configuration (hex mode, 200MHz)
 - Need `esp_ldo:` for voltage regulation
 - Use `mipi_dsi` display platform

@@ -57,6 +57,17 @@ wifi:
   # disconnect still rescans and joins the strongest AP.
   post_connect_roaming: false
 
+# ESP32-C6 WiFi co-processor firmware update (flashed by the P4 over SDIO).
+# Reports the C6's firmware version as a Home Assistant update entity; the
+# install only happens when triggered from HA. Picks the newest version in
+# the manifest that is <= the esp_hosted host library compiled into this
+# build (2.12.13 on ESPHome 2026.10.2).
+update:
+  - platform: esp32_hosted
+    name: "WiFi Co-processor Firmware"
+    type: http
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
+
 logger:
   level: debug
   logs:

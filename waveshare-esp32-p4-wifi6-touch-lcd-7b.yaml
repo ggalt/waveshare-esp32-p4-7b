@@ -47,7 +47,15 @@ esphome:
         - component.update: player_mac_sensor
         - component.update: player_entity_sensor
 
-
+# Overrides for the library's common/wifi.yaml (root config takes precedence)
+wifi:
+  # fast_connect skips the boot scan and can join a -90 dBm AP on the saved
+  # channel instead of the strongest one; always scan instead.
+  fast_connect: false
+  # Post-connect roaming over esp32_hosted (C6 co-processor) fails with
+  # 'Association Leave' + a ~31s scan hang, causing ~40s outages. A real
+  # disconnect still rescans and joins the strongest AP.
+  post_connect_roaming: false
 
 logger:
   level: debug
@@ -291,6 +299,8 @@ packages:
   media_voice: !include local/hardware/media_player-voice_assistant.yaml
   # Boot screen + api: with HA connection handling
   loading_screen: !include local/pages/loading_480px.yaml
+  # "WiFi Offline" banner across the top of every page
+  wifi_status: !include wifi_status.yaml
   # Weather condition icon + temperature from Home Assistant
   weather: !include weather_clock.yaml
   # Moon phase icon from Home Assistant
